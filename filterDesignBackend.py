@@ -23,6 +23,8 @@ class ZPlane:
         self.isZero = False
         self.polePositions = []
         self.zeroPositions = []
+        self.poleConjugates = []
+        self.zeroConjugates = []
 
         # UI Objects Connections
         self.ui.addZero.clicked.connect(self.create_zero)
@@ -111,17 +113,45 @@ class ZPlane:
         self.removeSymbolsByType("o")
 
     def reset(self):
-        # Remove all symbols from the graph
         self.removeSymbolsByType(None)
 
     ##### Add Conjugates #####
     ##########################
-    def copyCoordinates(self, coordinatesList):
-        new_CoordinatesList = [(x[0], -x[1]) for x in coordinatesList]
-        coordinatesList += new_CoordinatesList
+    def drawConjugates(self, conjugates, symbol, color):
+        for x, y in conjugates:
+            symbol_item = pg.ScatterPlotItem(
+                size=10,
+                symbol=symbol,
+                pen=pg.mkPen(None),
+                brush=pg.mkBrush(color),
+            )
+            symbol_item.addPoints(x=[x], y=[y])
+            self.ui.unitCirclePlot.addItem(symbol_item)
 
     def addConjugates(self):
         if self.ui.addConjugatesCheckBox.isChecked():
-            self.copyCoordinates(self.polePositions)
-            self.copyCoordinates(self.zeroPositions)
-            logging.debug(f"poles: {self.polePositions}\nzeros: {self.zeroPositions}")
+            # Create new lists for conjugates
+            self.poleConjugates = [(x[0], -x[1]) for x in self.polePositions]
+            self.zeroConjugates = [(x[0], -x[1]) for x in self.zeroPositions]
+
+            # Draw pole conjugates
+            self.drawConjugates(self.poleConjugates, "x", "r")
+
+            # Draw zero conjugates
+            self.drawConjugates(self.zeroConjugates, "o", "y")
+
+            logging.debug(
+                f"polesConj: {self.poleConjugates}\nzerosConj: {self.zeroConjugates}"
+            )
+        else:
+            # Reset the lists if the checkbox is unchecked
+            self.poleConjugates = []
+            self.zeroConjugates = []
+
+            # Remove existing conjugate symbols
+            self.removeSymbolsByType("rx")
+            self.removeSymbolsByType("oy")
+
+            logging.debug(
+                f"polesConj: {self.poleConjugates}\nzerosConj: {self.zeroConjugates}"
+            )
