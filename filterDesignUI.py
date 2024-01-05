@@ -13,7 +13,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph import PlotWidget
 
 import icons
-from filterDesignBackend import ZPlane
 
 
 class Ui_FilterDesigner(object):
@@ -332,12 +331,11 @@ if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
-    # with open("stylesheet.qss", "r") as f:
-    #     stylesheet = f.read()
-    #     app.setStyleSheet(stylesheet)
+    with open("stylesheet.qss", "r") as f:
+        stylesheet = f.read()
+        app.setStyleSheet(stylesheet)
     FilterDesigner = QtWidgets.QMainWindow()
     ui = Ui_FilterDesigner()
     ui.setupUi(FilterDesigner)
-    zplane = ZPlane(ui)
     FilterDesigner.show()
     sys.exit(app.exec_())
