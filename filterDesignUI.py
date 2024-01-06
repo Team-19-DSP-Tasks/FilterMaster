@@ -12,7 +12,7 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph import PlotWidget
 
-import icons
+import UI_Layout.icons as icons
 
 
 class Ui_FilterDesigner(object):
@@ -50,12 +50,12 @@ class Ui_FilterDesigner(object):
         self.filteredSignal.setMinimumSize(QtCore.QSize(0, 0))
         self.filteredSignal.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.filteredSignal.setObjectName("filteredSignal")
-        self.verticalLayout_7.addWidget(self.filteredSignal)
         self.originalApplicationSignal = PlotWidget(self.applicationGraphs)
         self.originalApplicationSignal.setMinimumSize(QtCore.QSize(0, 0))
         self.originalApplicationSignal.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.originalApplicationSignal.setObjectName("originalApplicationSignal")
         self.verticalLayout_7.addWidget(self.originalApplicationSignal)
+        self.verticalLayout_7.addWidget(self.filteredSignal)
         self.verticalLayout_8.addWidget(self.applicationGraphs)
         self.mousePadGroupBox = QtWidgets.QGroupBox(self.frame_2)
         self.mousePadGroupBox.setMinimumSize(QtCore.QSize(0, 0))
@@ -130,7 +130,7 @@ class Ui_FilterDesigner(object):
         circle_roi = pg.CircleROI(
             [-1, -1],
             size=(2, 2),
-            pen=pg.mkPen(color="r", width=2),
+            pen=pg.mkPen(color="orange", width=2),
             movable=False,
             resizable=False,
             rotatable=False,
@@ -147,11 +147,14 @@ class Ui_FilterDesigner(object):
         self.unitCirclePlot.addItem(circle_roi)
         self.unitCirclePlot.addItem(x_axis)
         self.unitCirclePlot.addItem(y_axis)
+        self.unitCirclePlot.hideAxis("bottom")
+        self.unitCirclePlot.hideAxis("left")
 
         circle_roi.removeHandle(0)
         # Set the view range
         self.unitCirclePlot.setMouseEnabled(x=False, y=False)
         self.unitCirclePlot.setRange(xRange=(-1, 1), yRange=(-1, 1))
+        self.unitCirclePlot.setLimits(xMin=-1.1, xMax=1.1, yMin=-1.1, yMax=1.1)
 
         self.horizontalLayout_2.addWidget(self.unitCirclePlot)
 

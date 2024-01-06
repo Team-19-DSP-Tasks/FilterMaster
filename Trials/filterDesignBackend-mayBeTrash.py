@@ -1,14 +1,9 @@
-import csv
 import logging
-import sys
 
 import numpy as np
-import pandas as pd
 import pyqtgraph as pg
 import scipy
-import wfdb
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QFileDialog
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -21,9 +16,11 @@ with open("log.log", "a") as log_file:
     log_file.write("\n")
 
 
-# Global Variables for creating and storing poles and zeros
+# Global Variables
 isPole = False
 isZero = False
+isDrag = False
+what_item = ""  # what item i am close to.. to drag it with mouse
 polePositions = []  # first added positions
 zeroPositions = []  # first added positions
 poleConjugates = []  # conjugates to the added positions
@@ -31,9 +28,7 @@ zeroConjugates = []  # conjugates to the added positions
 poles = []  # combination of conjugates and the clicked positions
 zeros = []  # combination of conjugates and the clicked positions
 
-# Global Variables for real time plotting
-signalIndex = 0
-imported_data = None
+# Note: Manhattan Length = ∣x1 - x2| + |y1 - y2|
 
 
 ##### Creating Zeros or Poles #####
@@ -65,32 +60,38 @@ def create_zero():
 def handleUnitCircleClick(event, unitCirclePlot):
     global polePositions, zeroPositions
     # Get the coordinates of the mouse click
+    pos = unitCirclePlot.mapToView(event.scenePos())
+    x, y = pos.x(), pos.y()
 
     if event.button() == QtCore.Qt.LeftButton:
-        pos = unitCirclePlot.mapToView(event.scenePos())
-        x, y = pos.x(), pos.y()
-        # Add a symbol at the clicked position based on the current mode
-        if isPole:
-            symbol = "x"
-            color = "b"
-        elif isZero:
-            symbol = "o"
-            color = "g"
+        if isDraggingMode(x, y, polePositions, "pole") or isDraggingMode(
+            x, y, zeroPositions, "zero"
+        ):
+            print("I am Dragging")
+            return
+        elif not isDrag:
+            # Add a symbol at the clicked position based on the current mode
+            if isPole:
+                symbol = "x"
+                color = "b"
+            elif isZero:
+                symbol = "o"
+                color = "g"
 
-        # Add the symbol to the unitCirclePlot
-        symbol_item = pg.ScatterPlotItem(
-            size=10,
-            symbol=symbol,
-            pen=pg.mkPen(None),
-            brush=pg.mkBrush(color),
-        )
-        symbol_item.addPoints(x=[x], y=[y])
-        unitCirclePlot.addItem(symbol_item)
+            # Add the symbol to the unitCirclePlot
+            symbol_item = pg.ScatterPlotItem(
+                size=10,
+                symbol=symbol,
+                pen=pg.mkPen(None),
+                brush=pg.mkBrush(color),
+            )
+            symbol_item.addPoints(x=[x], y=[y])
+            unitCirclePlot.addItem(symbol_item)
 
-        # Log the click coordinates and add to the corresponding list
-        create(x, y)
-        logging.debug(f"poles: {polePositions}")
-        logging.debug(f"zeros: {zeroPositions}")
+            # Log the click coordinates and add to the corresponding list
+            create(x, y)
+            logging.debug(f"poles: {polePositions}")
+            logging.debug(f"zeros: {zeroPositions}")
 
 
 ##### Deleting Zeros or Poles or Both #####
@@ -156,62 +157,45 @@ def addConjugates(addConjugatesCheckBox, unitCirclePlot):
         logging.debug(f"polesConj: {poleConjugates}\nzerosConj: {zeroConjugates}")
 
 
-# Predefined Real Time Plotting
-def updatePlot(originalApplicationSignal, data):
-    global signalIndex
-    originalApplicationSignal.clear()
-    signalIndex += 1
-    if signalIndex >= len(data):
-        signalIndex = 0
-    x_data = np.arange(signalIndex)
-    y_data = data[:signalIndex]
-    y_max = max(y_data)
-    y_min = min(y_data)
-    originalApplicationSignal.plot(x=x_data, y=y_data, pen="orange")
-    originalApplicationSignal.setYRange(y_min, y_max, padding=0.1)
-    # Calculate the visible range for the X-axis based on the current signal_index_1
-    visible_range = (signalIndex - 150, signalIndex)
-    # Set the X-axis limits to control the visible range
-    x_min_limit = 0
-    x_max_limit = signalIndex + 0.1
-    originalApplicationSignal.setLimits(
-        xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
-    )
-    originalApplicationSignal.setXRange(*visible_range, padding=0)
+##### Dragging #####
+####################
+def initializeDragging(item):
+    global isDrag, what_item
+    isDrag = True
+    what_item = item
 
 
-# Import a signal
-def importSignal(originalApplicationSignal):
-    global imported_data, timer
-    options = QFileDialog.Options()
-    file_path, _ = QFileDialog.getOpenFileName(
-        None,
-        "Open Signal Files",
-        "",
-        "Signal Files (*.csv *.hea *.dat);;All Files (*)",
-        options=options,
-    )
-
-    if file_path:
-        try:
-            if file_path.endswith(".hea") or file_path.endswith(".dat"):
-                # Read signal data from .hea and .dat files using wfdb library
-                record = wfdb.rdrecord(file_path[:-4])  # Remove ".hea" extension
-                imported_data = record.p_signal[:, 0]  # Use the first channel
-
-            elif file_path.endswith(".csv"):
-                # Use pandas to read the CSV file
-                data_frame = pd.read_csv(file_path)
-                # Use the first column as the signal data
-                imported_data = data_frame.iloc[:, 0].to_numpy()
-            else:
-                pass
-            print("accessed")
-            updatePlot(originalApplicationSignal, imported_data)
-        except Exception as e:
-            print(f"Error loading the file: {e}")
+def isDraggingMode(clickedX, clickedY, positions, item):
+    global isDrag
+    if not isDrag:
+        Distancethreshold = 0.1
+        for pos in positions:
+            x = pos[0]
+            y = pos[1]
+            if (abs(x - clickedX) + abs(y - clickedY)) < Distancethreshold:
+                initializeDragging(item)
+                return True
+    return False
 
 
-# Plot the imported signal
+def moveMouseForDragging(event, unitCirclePlot):
+    global what_item
+    if isDrag == False:
+        return
+    if isDrag:
+        newPos = unitCirclePlot.plotItem.vb.mapSceneToView(event)
+        if what_item == "pole":
+            updatePositions(polePositions, newPos)
+        if what_item == "zero":
+            updatePositions(zeroPositions, newPos)
 
-# Generate signal by your mouse movement
+
+def updatePositions(positions, comparisonPos):
+    Distancethreshold = 0.15
+    for pos in positions:
+        if (
+            abs(pos[0] - comparisonPos.x()) + abs(pos[1] - comparisonPos.y())
+        ) < Distancethreshold:
+            print("kareem")
+            # polePositions[i] = comparisonPos
+            # drawConjugates()

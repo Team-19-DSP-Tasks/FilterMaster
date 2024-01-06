@@ -1,14 +1,9 @@
-import csv
 import logging
-import sys
 
 import numpy as np
-import pandas as pd
 import pyqtgraph as pg
 import scipy
-import wfdb
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QFileDialog
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -21,7 +16,7 @@ with open("log.log", "a") as log_file:
     log_file.write("\n")
 
 
-# Global Variables for creating and storing poles and zeros
+# Global Variables
 isPole = False
 isZero = False
 polePositions = []  # first added positions
@@ -30,10 +25,6 @@ poleConjugates = []  # conjugates to the added positions
 zeroConjugates = []  # conjugates to the added positions
 poles = []  # combination of conjugates and the clicked positions
 zeros = []  # combination of conjugates and the clicked positions
-
-# Global Variables for real time plotting
-signalIndex = 0
-imported_data = None
 
 
 ##### Creating Zeros or Poles #####
@@ -154,64 +145,3 @@ def addConjugates(addConjugatesCheckBox, unitCirclePlot):
         drawConjugates(unitCirclePlot, zeroConjugates, "o", "y")
 
         logging.debug(f"polesConj: {poleConjugates}\nzerosConj: {zeroConjugates}")
-
-
-# Predefined Real Time Plotting
-def updatePlot(originalApplicationSignal, data):
-    global signalIndex
-    originalApplicationSignal.clear()
-    signalIndex += 1
-    if signalIndex >= len(data):
-        signalIndex = 0
-    x_data = np.arange(signalIndex)
-    y_data = data[:signalIndex]
-    y_max = max(y_data)
-    y_min = min(y_data)
-    originalApplicationSignal.plot(x=x_data, y=y_data, pen="orange")
-    originalApplicationSignal.setYRange(y_min, y_max, padding=0.1)
-    # Calculate the visible range for the X-axis based on the current signal_index_1
-    visible_range = (signalIndex - 150, signalIndex)
-    # Set the X-axis limits to control the visible range
-    x_min_limit = 0
-    x_max_limit = signalIndex + 0.1
-    originalApplicationSignal.setLimits(
-        xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
-    )
-    originalApplicationSignal.setXRange(*visible_range, padding=0)
-
-
-# Import a signal
-def importSignal(originalApplicationSignal):
-    global imported_data, timer
-    options = QFileDialog.Options()
-    file_path, _ = QFileDialog.getOpenFileName(
-        None,
-        "Open Signal Files",
-        "",
-        "Signal Files (*.csv *.hea *.dat);;All Files (*)",
-        options=options,
-    )
-
-    if file_path:
-        try:
-            if file_path.endswith(".hea") or file_path.endswith(".dat"):
-                # Read signal data from .hea and .dat files using wfdb library
-                record = wfdb.rdrecord(file_path[:-4])  # Remove ".hea" extension
-                imported_data = record.p_signal[:, 0]  # Use the first channel
-
-            elif file_path.endswith(".csv"):
-                # Use pandas to read the CSV file
-                data_frame = pd.read_csv(file_path)
-                # Use the first column as the signal data
-                imported_data = data_frame.iloc[:, 0].to_numpy()
-            else:
-                pass
-            print("accessed")
-            updatePlot(originalApplicationSignal, imported_data)
-        except Exception as e:
-            print(f"Error loading the file: {e}")
-
-
-# Plot the imported signal
-
-# Generate signal by your mouse movement
