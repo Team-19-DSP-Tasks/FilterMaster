@@ -32,10 +32,9 @@ class MainWindow(QMainWindow, Ui_FilterDesigner):
             )
         )
 
-        # Connect the mouseClickEvent signal to the handleUnitCircleClick method
         self.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: back.handleUnitCircleClick(
-                event, unitCirclePlot=self.unitCirclePlot
+                event, self.unitCirclePlot, self.addConjugatesCheckBox
             )
         )
         self.actionImport_Signal.triggered.connect(

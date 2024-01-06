@@ -38,16 +38,6 @@ imported_data = None
 
 ##### Creating Zeros or Poles #####
 ###################################
-def create(x, y):
-    global isPole, isZero
-    if isPole:
-        logging.info(f"Adding Pole at Coordinates --> x:{x}, y:{y}")
-        polePositions.append((x, y))
-    elif isZero:
-        logging.info(f"Adding Zero at Coordinates --> x:{x}, y:{y}")
-        zeroPositions.append((x, y))
-
-
 def create_pole():
     global isPole, isZero
     isPole = True
@@ -62,10 +52,23 @@ def create_zero():
     logging.info(f"isZero = {isZero}")
 
 
-def handleUnitCircleClick(event, unitCirclePlot):
+def create(x, y, addConjugatesCheckBox, unitCirclePlot):
+    global isPole, isZero
+    if isPole:
+        logging.info(f"Adding Pole at Coordinates --> x:{x}, y:{y}")
+        polePositions.append((x, y))
+    elif isZero:
+        logging.info(f"Adding Zero at Coordinates --> x:{x}, y:{y}")
+        zeroPositions.append((x, y))
+
+    # Call addConjugates if the checkbox is checked
+    if addConjugatesCheckBox.isChecked():
+        addConjugates(addConjugatesCheckBox, unitCirclePlot)
+
+
+def handleUnitCircleClick(event, unitCirclePlot, addConjugatesCheckBox):
     global polePositions, zeroPositions
     # Get the coordinates of the mouse click
-
     if event.button() == QtCore.Qt.LeftButton:
         pos = unitCirclePlot.mapToView(event.scenePos())
         x, y = pos.x(), pos.y()
@@ -88,7 +91,7 @@ def handleUnitCircleClick(event, unitCirclePlot):
         unitCirclePlot.addItem(symbol_item)
 
         # Log the click coordinates and add to the corresponding list
-        create(x, y)
+        create(x, y, addConjugatesCheckBox, unitCirclePlot)
         logging.debug(f"poles: {polePositions}")
         logging.debug(f"zeros: {zeroPositions}")
 
