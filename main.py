@@ -28,6 +28,11 @@ class MainWindow(QMainWindow, Ui_FilterDesigner):
         )
         self.resetDesign.clicked.connect(lambda: back.reset_design(self.unitCirclePlot))
 
+        self.addConjugatesCheckBox.stateChanged.connect(
+            lambda state: back.handle_conjugates(
+                self.addConjugatesCheckBox, self.unitCirclePlot
+            )
+        )
         self.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: back.handle_unit_circle_click(
                 event, self.unitCirclePlot, self.addConjugatesCheckBox
