@@ -23,6 +23,9 @@ poles = []
 zeros = []
 poles_conjugates = []
 zeros_conjugates = []
+# To store positions of poles and zeros
+poles_positions = []
+zeros_positions = []
 
 
 # Creating Zeros and Poles
@@ -42,6 +45,28 @@ def zero_mode():
     pass
 
 
-def handleUnitCircleClick(event, unitCirclePlot, addConjugatesCheckBox):
+def draw_item(pos, symbol, color, items):
+    item = TargetItem(
+        pos=pos,
+        size=10,
+        movable=True,
+        symbol=symbol,
+        pen=pg.mkPen(color),
+    )
+    items.append(item)
+
+
+def handle_unit_circle_click(event, unitCirclePlot, addConjugatesCheckBox):
+    global is_pole, is_zero, poles, zeros, poles_positions, zeros_positions, poles_conjugates, zeros_conjugates
     if event.button() == QtCore.Qt.leftButton:
         pos = unitCirclePlot.mapToView(event.scenePos())
+        if is_pole:
+            draw_item(pos, "x", "b", poles)
+            poles_positions.append(pos)
+        elif is_zero:
+            draw_item(pos, "o", "g", zeros)
+            zeros_positions.append(pos)
+
+
+def update_positions(self):
+    pass

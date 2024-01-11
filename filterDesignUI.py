@@ -122,8 +122,8 @@ class Ui_FilterDesigner(object):
             self.unitCirclePlot.sizePolicy().hasHeightForWidth()
         )
         self.unitCirclePlot.setSizePolicy(sizePolicy)
-        self.unitCirclePlot.setMinimumSize(QtCore.QSize(150, 150))
-        self.unitCirclePlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.unitCirclePlot.setMinimumSize(QtCore.QSize(200, 200))
+        self.unitCirclePlot.setMaximumSize(QtCore.QSize(200, 200))
         self.unitCirclePlot.setObjectName("unitCirclePlot")
 
         # Create a CircleROI
@@ -260,10 +260,16 @@ class Ui_FilterDesigner(object):
         self.magFrequencyResponse.setMinimumSize(QtCore.QSize(0, 0))
         self.magFrequencyResponse.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.magFrequencyResponse.setObjectName("magFrequencyResponse")
+        self.magFrequencyResponse.setTitle("Filter Magnitude Response")
+        self.magFrequencyResponse.setLabel("bottom", "Frequency (rad/sample)")
+        self.magFrequencyResponse.setLabel("left", "Phase (radians)")
         self.verticalLayout_3.addWidget(self.magFrequencyResponse)
         self.phaseFrequencyResponse = PlotWidget(self.frequencyResponseGroupBox)
         self.phaseFrequencyResponse.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.phaseFrequencyResponse.setObjectName("phaseFrequencyResponse")
+        self.phaseFrequencyResponse.setTitle("Filter Phase Response")
+        self.phaseFrequencyResponse.setLabel("bottom", "Frequency (rad/sample)")
+        self.phaseFrequencyResponse.setLabel("left", "Phase (radians)")
         self.verticalLayout_3.addWidget(self.phaseFrequencyResponse)
         self.verticalLayout_6.addWidget(self.frequencyResponseGroupBox)
         self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
@@ -334,7 +340,7 @@ if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
-    with open("stylesheet.qss", "r") as f:
+    with open("UI_Layout/stylesheet.qss", "r") as f:
         stylesheet = f.read()
         app.setStyleSheet(stylesheet)
     FilterDesigner = QtWidgets.QMainWindow()

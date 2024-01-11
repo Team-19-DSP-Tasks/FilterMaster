@@ -17,10 +17,23 @@ class MainWindow(QMainWindow, Ui_FilterDesigner):
         self.data = self.data[-1 * self.max_data_points :]
 
         # UI Objects Connections
-        self.addPole.clicked.connect(lambda: back.pole_mode())
-        self.addZero.clicked.connect(lambda: back.zero_mode())
+        self.addZero.clicked.connect(lambda: back.create_zero())
+        self.addPole.clicked.connect(lambda: back.create_pole())
+        self.removeAllPoles.clicked.connect(
+            lambda: back.removePoles(self.unitCirclePlot)
+        )
+        self.removeAllZeros.clicked.connect(
+            lambda: back.removeZeros(self.unitCirclePlot)
+        )
+        self.resetDesign.clicked.connect(lambda: back.reset(self.unitCirclePlot))
+        self.addConjugatesCheckBox.stateChanged.connect(
+            lambda state: back.addConjugates(
+                self.addConjugatesCheckBox, self.unitCirclePlot
+            )
+        )
+
         self.unitCirclePlot.scene().sigMouseClicked.connect(
-            lambda event: back.handle_unit_circle_click(
+            lambda event: back.handleUnitCircleClick(
                 event, self.unitCirclePlot, self.addConjugatesCheckBox
             )
         )
