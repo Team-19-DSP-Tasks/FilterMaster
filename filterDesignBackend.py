@@ -1,8 +1,12 @@
 import logging
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pyqtgraph as pg
 from PyQt5 import QtCore
+from PyQt5.QtCore import pyqtSignal
 from pyqtgraph import TargetItem
+from scipy.signal import freqz, zpk2tf
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -191,3 +195,29 @@ def handle_conjugates(addConjugatesCheckBox, unitCirclePlot):
         remove(unitCirclePlot, poles_conjugates + zeros_conjugates)
         poles_conjugates.clear()
         zeros_conjugates.clear()
+
+
+def plot_responses():
+    global zeros_positions, poles_positions
+    zeros_array = np.array([complex(z.x(), z.y()) for z in zeros_positions])
+    poles_array = np.array([complex(p.x(), p.y()) for p in poles_positions])
+
+    numerator, denominator = zpk2tf(zeros_array, poles_array, 1)
+    w, h = freqz(numerator, denominator)
+
+    plt.figure(figsize=(8, 6))
+
+    plt.subplot(2, 1, 1)
+    plt.semilogx(w, 20 * np.log10(abs(h)))
+    plt.xlabel("Frequency (rad/s)")
+    plt.ylabel("Magnitude (dB)")
+    plt.grid(True)
+
+    plt.subplot(2, 1, 2)
+    plt.semilogx(w, np.angle(h))
+    plt.xlabel("Frequency (rad/s)")
+    plt.ylabel("Phase (radians)")
+    plt.grid(True)
+
+    plt.tight_layout()
+    plt.show()
