@@ -26,15 +26,16 @@ zeros_conjugates = []
 # To store positions of poles and zeros
 poles_positions = []
 zeros_positions = []
+poles_conjugates_positions = []
+zeros_conjugates_positions = []
 
 
-# Creating Zeros and Poles
+# CREATING Zeros and Poles
 def pole_mode():
     global is_pole, is_zero
     is_pole = True
     is_zero = False
     logging.info(f"isPole = {is_pole}")
-    pass
 
 
 def zero_mode():
@@ -42,10 +43,9 @@ def zero_mode():
     is_pole = False
     is_zero = True
     logging.info(f"isPole = {is_zero}")
-    pass
 
 
-def draw_item(pos, symbol, color, items):
+def draw_item(unitCirclePlot, pos, symbol, color, items, positions_list):
     item = TargetItem(
         pos=pos,
         size=10,
@@ -53,20 +53,62 @@ def draw_item(pos, symbol, color, items):
         symbol=symbol,
         pen=pg.mkPen(color),
     )
+    unitCirclePlot.addItem(item)
     items.append(item)
+    positions_list.append(pos)
+    index = positions_list.index(pos)
+    # Connect the sigPositionChanged signal to the update_positions function
+    item.sigPositionChanged.connect(
+        lambda: update_positions(item, positions_list, index)
+    )
 
 
 def handle_unit_circle_click(event, unitCirclePlot, addConjugatesCheckBox):
-    global is_pole, is_zero, poles, zeros, poles_positions, zeros_positions, poles_conjugates, zeros_conjugates
-    if event.button() == QtCore.Qt.leftButton:
+    global is_pole, is_zero
+    global poles, zeros, poles_positions, zeros_positions
+    global poles_conjugates, zeros_conjugates, poles_conjugates_positions, zeros_conjugates_positions
+    if event.button() == QtCore.Qt.LeftButton:
         pos = unitCirclePlot.mapToView(event.scenePos())
+        print(f"type: {type(pos)}")
         if is_pole:
-            draw_item(pos, "x", "b", poles)
-            poles_positions.append(pos)
+            draw_item(unitCirclePlot, pos, "x", "r", poles, poles_positions)
         elif is_zero:
-            draw_item(pos, "o", "g", zeros)
-            zeros_positions.append(pos)
+            draw_item(unitCirclePlot, pos, "o", "g", zeros, zeros_positions)
 
 
-def update_positions(self):
-    pass
+def update_positions(item, positions_list, index):
+    # Update the position in the list when the item is moved
+    new_pos = item.pos()
+    print(f"new pos = {new_pos}")
+    positions_list[index] = new_pos
+    logging.debug(f"positions_List = {positions_list}")
+
+
+# REMOVE All Zeros/Poles and RESET Design
+def remove_poles(unitCirclePlot):
+    global poles, poles_conjugates
+    global poles_positions, poles_conjugates_positions
+
+    remove(unitCirclePlot, poles + poles_conjugates)
+
+
+def remove_zeros(unitCirclePlot):
+    global zeros, zeros_conjugates
+    global zeros_positions, zeros_conjugates_positions
+
+    remove(unitCirclePlot, zeros + zeros_conjugates)
+
+
+def reset_design(unitCirclePlot):
+    global poles, poles_conjugates
+    global poles_positions, poles_conjugates_positions
+    global zeros, zeros_conjugates
+    global zeros_positions, zeros_conjugates_positions
+
+    remove(unitCirclePlot, poles + poles_conjugates)
+    remove(unitCirclePlot, zeros + zeros_conjugates)
+
+
+def remove(unitCirclePlot, whichList):
+    for item in whichList:
+        unitCirclePlot.removeItem(item)
