@@ -37,17 +37,6 @@ class MainWindow(QMainWindow, Ui_FilterDesigner):
                 event, self.unitCirclePlot, self.addConjugatesCheckBox
             )
         )
-        self.actionImport_Signal.triggered.connect(
-            lambda: back.importSignal(self.originalApplicationSignal)
-        )
-
-        # Predefined Real Time Plotting
-        self.updateInterval = 50
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(
-            lambda: back.updatePlot(self.originalApplicationSignal, self.data)
-        )
-        self.timer.start(self.updateInterval)
 
 
 if __name__ == "__main__":
