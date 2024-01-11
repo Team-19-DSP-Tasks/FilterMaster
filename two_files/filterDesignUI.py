@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph import PlotWidget
 
 import UI_Layout.icons as icons
+from filterDesignBackendSpare2 import Backend
 
 
 class Ui_FilterDesigner(object):
@@ -346,5 +347,6 @@ if __name__ == "__main__":
     FilterDesigner = QtWidgets.QMainWindow()
     ui = Ui_FilterDesigner()
     ui.setupUi(FilterDesigner)
+    backend = Backend(ui)
     FilterDesigner.show()
     sys.exit(app.exec_())

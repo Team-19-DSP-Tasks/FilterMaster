@@ -12,11 +12,6 @@ class MainWindow(QMainWindow, Ui_FilterDesigner):
         super(MainWindow, self).__init__()
         self.setupUi(self)
 
-        # Predefined Data to real time plotting
-        self.max_data_points = 4500  # trim data
-        self.data = np.loadtxt("signals/leadII_ecg_fibrillation.csv", delimiter=",")
-        self.data = self.data[-1 * self.max_data_points :]
-
         # UI Objects Connections
         self.addPole.clicked.connect(lambda: back.pole_mode())
         self.addZero.clicked.connect(lambda: back.zero_mode())
