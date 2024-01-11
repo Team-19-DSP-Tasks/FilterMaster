@@ -9,11 +9,11 @@
 
 
 import pyqtgraph as pg
+from filterDesignBackend import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph import PlotWidget
 
-import UI_Layout.icons as icons
-from filterDesignBackendSpare2 import Backend
+import icons as icons
 
 
 class Ui_FilterDesigner(object):
@@ -271,6 +271,10 @@ class Ui_FilterDesigner(object):
         self.phaseFrequencyResponse.setTitle("Filter Phase Response")
         self.phaseFrequencyResponse.setLabel("bottom", "Frequency (rad/sample)")
         self.phaseFrequencyResponse.setLabel("left", "Phase (radians)")
+        self.magFrequencyResponse.setLogMode(x=True, y=True)
+        self.phaseFrequencyResponse.setLogMode(x=True, y=False)
+        self.magFrequencyResponse.showGrid(True, True)
+        self.phaseFrequencyResponse.showGrid(True, True)
         self.verticalLayout_3.addWidget(self.phaseFrequencyResponse)
         self.verticalLayout_6.addWidget(self.frequencyResponseGroupBox)
         self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
@@ -341,7 +345,7 @@ if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
-    with open("UI_Layout/stylesheet.qss", "r") as f:
+    with open("two_files\stylesheet.qss", "r") as f:
         stylesheet = f.read()
         app.setStyleSheet(stylesheet)
     FilterDesigner = QtWidgets.QMainWindow()

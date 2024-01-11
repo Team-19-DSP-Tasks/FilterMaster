@@ -51,6 +51,12 @@ class Backend:
         self.zeros_positions = []
         self.poles_conjugates_positions = []
         self.zeros_conjugates_positions = []
+        # For plotting magnitude and phase responses
+        self.mag_curve = pg.PlotCurveItem(pen="b")
+        self.phase_curve = pg.PlotCurveItem(pen="r")
+        # Add PlotCurveItem to magnitude and phase response plots
+        self.ui.magFrequencyResponse.addItem(self.mag_curve)
+        self.ui.phaseFrequencyResponse.addItem(self.phase_curve)
 
     # CREATING Zeros and Poles
     def pole_mode(self):
@@ -82,6 +88,8 @@ class Backend:
         index = positions_list.index(pos)
         # Connect the sigPositionChanged signal to the update_positions function
         item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
+        # Only call plot_responses once after all initial items are drawn
+        # self.plot_responses()
 
     def handle_unit_circle_click(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -105,16 +113,6 @@ class Backend:
                     self.zeros_conjugates_positions,
                 )
 
-            if self.ui.addConjugatesCheckBox.isChecked():
-                if self.is_pole:
-                    self.draw_conjugates(
-                        [self.poles_conjugates_positions[-1]], "x", "b"
-                    )
-                elif self.is_zero:
-                    self.draw_conjugates(
-                        [self.zeros_conjugates_positions[-1]], "o", "y"
-                    )
-
     def update_positions(self, item, index):
         # Update the position in the list when the item is moved
         new_pos = item.pos()
@@ -124,6 +122,7 @@ class Backend:
         elif item in self.zeros:
             self.zeros_positions[index] = new_pos
             self.zeros_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
+        self.update_responses()
 
     # REMOVE All Zeros/Poles and RESET Design
     def remove_poles(self):
@@ -159,6 +158,7 @@ class Backend:
     def remove(self, whichList):
         for item in whichList:
             self.ui.unitCirclePlot.removeItem(item)
+        self.update_responses()
 
     # HANDLING CONJUGATES
     def draw_conjugates(self, conjugates_positions, symbol, color):
@@ -175,14 +175,45 @@ class Backend:
                 self.poles_conjugates.append(item)
             elif symbol == "o":
                 self.zeros_conjugates.append(item)
+        self.update_responses()
 
     def handle_conjugates(self):
         if self.ui.addConjugatesCheckBox.isChecked():
             self.draw_conjugates(self.poles_conjugates_positions, "x", "b")
             self.draw_conjugates(self.zeros_conjugates_positions, "o", "y")
         else:
-            self.remove(
-                self.ui.unitCirclePlot, self.poles_conjugates + self.zeros_conjugates
-            )
+            self.remove(self.poles_conjugates + self.zeros_conjugates)
             self.poles_conjugates.clear()
             self.zeros_conjugates.clear()
+
+    # PLOT MAGNITUDE AND PHASE RESPONSES
+    def update_responses(self):
+        # Get poles and zeros positions
+        zeros_array = np.array([complex(z.x(), z.y()) for z in self.zeros_positions])
+        poles_array = np.array([complex(p.x(), p.y()) for p in self.poles_positions])
+
+        # Calculate magnitude and phase responses
+        numerator, denominator = zpk2tf(zeros_array, poles_array, 1)
+        w, h = freqz(numerator, denominator)
+
+        # Update magnitude response plot
+        self.mag_curve.setData(w, 20 * np.log10(abs(h)))
+
+        # Update phase response plot
+        self.phase_curve.setData(w, np.angle(h))
+
+    def plot_responses(self):
+        zeros_array = np.array([complex(z.x(), z.y()) for z in self.zeros_positions])
+        poles_array = np.array([complex(p.x(), p.y()) for p in self.poles_positions])
+
+        numerator, denominator = zpk2tf(zeros_array, poles_array, 1)
+        w, h = freqz(numerator, denominator)
+
+        # Update magnitude response plot
+        self.ui.magFrequencyResponse.clear()
+        self.mag_curve.setData(w, 20 * np.log10(abs(h)))
+
+        # Update phase response plot
+        self.ui.phaseFrequencyResponse.clear()
+        self.phase_curve.setData(w, np.angle(h))
+        self.update_responses()
