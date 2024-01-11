@@ -150,6 +150,8 @@ class Ui_FilterDesigner(object):
         self.unitCirclePlot.addItem(y_axis)
         self.unitCirclePlot.hideAxis("bottom")
         self.unitCirclePlot.hideAxis("left")
+        self.mousePad.hideAxis("bottom")
+        self.mousePad.hideAxis("left")
 
         circle_roi.removeHandle(0)
         # Set the view range
@@ -293,6 +295,7 @@ class Ui_FilterDesigner(object):
         self.actionImport_Signal = QtWidgets.QAction(FilterDesigner)
         self.actionImport_Signal.setObjectName("actionImport_Signal")
         self.menuFile.addAction(self.actionImport_Signal)
+        self.actionImport_Signal.setShortcut("Ctrl+I")
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 

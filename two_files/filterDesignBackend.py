@@ -2,9 +2,12 @@ import logging
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pyqtgraph as pg
+import wfdb
 from PyQt5 import QtCore
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QFileDialog
 from pyqtgraph import TargetItem
 from scipy.signal import freqz, zpk2tf
 
@@ -26,17 +29,16 @@ class Backend:
         # UI Objects Connections
         self.ui.addPole.clicked.connect(lambda: self.pole_mode())
         self.ui.addZero.clicked.connect(lambda: self.zero_mode())
-
         self.ui.removeAllPoles.clicked.connect(lambda: self.remove_poles())
         self.ui.removeAllZeros.clicked.connect(lambda: self.remove_zeros())
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
-
         self.ui.addConjugatesCheckBox.stateChanged.connect(
             lambda state: self.handle_conjugates()
         )
         self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: self.handle_unit_circle_click(event)
         )
+        self.ui.actionImport_Signal.triggered.connect(self.import_signal)
 
         # To control poles and zeros creation
         self.is_pole = False
@@ -57,6 +59,15 @@ class Backend:
         # Add PlotCurveItem to magnitude and phase response plots
         self.ui.magFrequencyResponse.addItem(self.mag_curve)
         self.ui.phaseFrequencyResponse.addItem(self.phase_curve)
+        # Global Variables for real time plotting
+        self.update_interval = 50
+        self.originial_signal_timer = QTimer()
+        self.originial_signal_timer.timeout.connect(self.update_plot)
+        self.originial_signal_timer.start(self.update_interval)
+        self.signalIndex = 0
+        self.predefined_data = np.loadtxt(
+            "signals/leadII_ecg_fibrillation.csv", delimiter=","
+        )
 
     # CREATING Zeros and Poles
     def pole_mode(self):
@@ -89,7 +100,8 @@ class Backend:
         # Connect the sigPositionChanged signal to the update_positions function
         item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
         # Only call plot_responses once after all initial items are drawn
-        # self.plot_responses()
+        if not self.poles_positions and not self.zeros_positions:
+            self.plot_responses()
 
     def handle_unit_circle_click(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -211,9 +223,67 @@ class Backend:
 
         # Update magnitude response plot
         self.ui.magFrequencyResponse.clear()
-        self.mag_curve.setData(w, 20 * np.log10(abs(h)))
+        self.ui.magFrequencyResponse.setLogMode(x=True, y=True)
+        self.ui.magFrequencyResponse.plot(w, 20 * np.log10(abs(h)), pen="b")
 
         # Update phase response plot
         self.ui.phaseFrequencyResponse.clear()
-        self.phase_curve.setData(w, np.angle(h))
+        self.ui.phaseFrequencyResponse.setLogMode(x=True, y=False)
+        self.ui.phaseFrequencyResponse.plot(w, np.angle(h), pen="r")
         self.update_responses()
+
+    def import_signal(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(
+            None,
+            "Open Signal Files",
+            "",
+            "Signal Files (*.csv *.hea *.dat);;All Files (*)",
+            options=options,
+        )
+
+        if file_path:
+            try:
+                if file_path.endswith(".hea") or file_path.endswith(".dat"):
+                    # Read signal data from .hea and .dat files using wfdb library
+                    record = wfdb.rdrecord(file_path[:-4])  # Remove ".hea" extension
+                    self.predefined_data = record.p_signal[
+                        :, 0
+                    ]  # Use the first channel
+
+                elif file_path.endswith(".csv"):
+                    # Use pandas to read the CSV file
+                    data_frame = pd.read_csv(file_path)
+                    # Use the first column as the signal data
+                    self.predefined_data = data_frame.iloc[:, 0].to_numpy()
+                else:
+                    pass
+
+                self.signalIndex = (
+                    0  # Reset the signal index when a new signal is imported
+                )
+                self.update_plot()  # Use the new signal data for real-time plotting
+                self.originial_signal_timer.start(self.update_interval)
+            except Exception as e:
+                print(f"Error loading the file: {e}")
+
+    def update_plot(self):
+        self.ui.originalApplicationSignal.clear()
+        self.signalIndex += 1
+        if self.signalIndex >= len(self.predefined_data):
+            self.signalIndex = 0
+        x_data = np.arange(self.signalIndex)
+        y_data = self.predefined_data[: self.signalIndex]
+        y_max = max(y_data)
+        y_min = min(y_data)
+        self.ui.originalApplicationSignal.plot(x=x_data, y=y_data, pen="orange")
+        self.ui.originalApplicationSignal.setYRange(y_min, y_max, padding=0.1)
+        # Calculate the visible range for the X-axis based on the current signal_index_1
+        visible_range = (self.signalIndex - 150, self.signalIndex)
+        # Set the X-axis limits to control the visible range
+        x_min_limit = 0
+        x_max_limit = self.signalIndex + 0.1
+        self.ui.originalApplicationSignal.setLimits(
+            xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
+        )
+        self.ui.originalApplicationSignal.setXRange(*visible_range, padding=0)
