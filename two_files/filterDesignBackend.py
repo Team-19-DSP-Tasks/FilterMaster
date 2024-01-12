@@ -64,7 +64,7 @@ class Backend:
         self.originial_signal_timer = QTimer()
         self.originial_signal_timer.timeout.connect(self.update_plot)
         self.originial_signal_timer.start(self.update_interval)
-        self.signalIndex = 0
+        self.signal_index = 0
         self.predefined_data = np.loadtxt(
             "signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
@@ -89,13 +89,7 @@ class Backend:
         self.ui.unitCirclePlot.addItem(item)
         items.append(item)
         positions_list.append(pos)
-        conjugates_list.append(
-            pg.Point(pos.x(), -pos.y())
-        )  # Add the conjugate position
-        if self.is_pole:
-            self.poles_conjugates_positions.append(pg.Point(pos.x(), -pos.y()))
-        elif self.is_zero:
-            self.zeros_conjugates_positions.append(pg.Point(pos.x(), -pos.y()))
+        conjugates_list.append(pg.Point(pos.x(), -pos.y()))
         index = positions_list.index(pos)
         # Connect the sigPositionChanged signal to the update_positions function
         item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
@@ -124,16 +118,22 @@ class Backend:
                     self.zeros_positions,
                     self.zeros_conjugates_positions,
                 )
+        if self.ui.addConjugatesCheckBox.isChecked():
+            if self.is_pole:
+                self.draw_conjugates([self.poles_conjugates_positions[-1]], "x", "b")
+            elif self.is_zero:
+                self.draw_conjugates([self.zeros_conjugates_positions[-1]], "o", "y")
 
     def update_positions(self, item, index):
-        # Update the position in the list when the item is moved
         new_pos = item.pos()
         if item in self.poles:
             self.poles_positions[index] = new_pos
             self.poles_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
+            self.poles_conjugates[index].setPos(self.poles_conjugates_positions[index])
         elif item in self.zeros:
             self.zeros_positions[index] = new_pos
             self.zeros_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
+            self.zeros_conjugates[index].setPos(self.zeros_conjugates_positions[index])
         self.update_responses()
 
     # REMOVE All Zeros/Poles and RESET Design
@@ -177,7 +177,7 @@ class Backend:
         for pos in conjugates_positions:
             item = TargetItem(
                 size=10,
-                movable=True,
+                movable=False,
                 symbol=symbol,
                 pen=pg.mkPen(color),
             )
@@ -232,6 +232,7 @@ class Backend:
         self.ui.phaseFrequencyResponse.plot(w, np.angle(h), pen="r")
         self.update_responses()
 
+    # APPLICATION SIGNALS PLOTTING
     def import_signal(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(
@@ -259,7 +260,7 @@ class Backend:
                 else:
                     pass
 
-                self.signalIndex = (
+                self.signal_index = (
                     0  # Reset the signal index when a new signal is imported
                 )
                 self.update_plot()  # Use the new signal data for real-time plotting
@@ -269,20 +270,20 @@ class Backend:
 
     def update_plot(self):
         self.ui.originalApplicationSignal.clear()
-        self.signalIndex += 1
-        if self.signalIndex >= len(self.predefined_data):
-            self.signalIndex = 0
-        x_data = np.arange(self.signalIndex)
-        y_data = self.predefined_data[: self.signalIndex]
+        self.signal_index += 1
+        if self.signal_index >= len(self.predefined_data):
+            self.signal_index = 0
+        x_data = np.arange(self.signal_index)
+        y_data = self.predefined_data[: self.signal_index]
         y_max = max(y_data)
         y_min = min(y_data)
         self.ui.originalApplicationSignal.plot(x=x_data, y=y_data, pen="orange")
         self.ui.originalApplicationSignal.setYRange(y_min, y_max, padding=0.1)
-        # Calculate the visible range for the X-axis based on the current signal_index_1
-        visible_range = (self.signalIndex - 150, self.signalIndex)
+        # Calculate the visible range for the X-axis based on the current signal_index
+        visible_range = (self.signal_index - 150, self.signal_index)
         # Set the X-axis limits to control the visible range
         x_min_limit = 0
-        x_max_limit = self.signalIndex + 0.1
+        x_max_limit = self.signal_index + 0.1
         self.ui.originalApplicationSignal.setLimits(
             xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
         )
