@@ -94,8 +94,7 @@ class Backend:
         # Connect the sigPositionChanged signal to the update_positions function
         item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
         # Only call plot_responses once after all initial items are drawn
-        if not self.poles_positions and not self.zeros_positions:
-            self.plot_responses()
+        self.update_responses()
 
     def handle_unit_circle_click(self, event):
         if event.button() == QtCore.Qt.LeftButton:
@@ -129,11 +128,17 @@ class Backend:
         if item in self.poles:
             self.poles_positions[index] = new_pos
             self.poles_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
-            self.poles_conjugates[index].setPos(self.poles_conjugates_positions[index])
+            if bool(self.poles_conjugates):
+                self.poles_conjugates[index].setPos(
+                    self.poles_conjugates_positions[index]
+                )
         elif item in self.zeros:
             self.zeros_positions[index] = new_pos
             self.zeros_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
-            self.zeros_conjugates[index].setPos(self.zeros_conjugates_positions[index])
+            if bool(self.zeros_conjugates):
+                self.zeros_conjugates[index].setPos(
+                    self.zeros_conjugates_positions[index]
+                )
         self.update_responses()
 
     # REMOVE All Zeros/Poles and RESET Design
@@ -144,6 +149,7 @@ class Backend:
         self.poles_positions.clear()
         self.poles_conjugates.clear()
         self.poles_conjugates_positions.clear()
+        self.update_responses()
 
     def remove_zeros(self):
         self.remove(self.zeros + self.zeros_conjugates)
@@ -152,6 +158,7 @@ class Backend:
         self.zeros_positions.clear()
         self.zeros_conjugates.clear()
         self.zeros_conjugates_positions.clear()
+        self.update_responses()
 
     def reset_design(self):
         self.remove(
@@ -166,6 +173,7 @@ class Backend:
         self.zeros_positions.clear()
         self.zeros_conjugates.clear()
         self.zeros_conjugates_positions.clear()
+        self.update_responses()
 
     def remove(self, whichList):
         for item in whichList:
@@ -187,7 +195,6 @@ class Backend:
                 self.poles_conjugates.append(item)
             elif symbol == "o":
                 self.zeros_conjugates.append(item)
-        self.update_responses()
 
     def handle_conjugates(self):
         if self.ui.addConjugatesCheckBox.isChecked():
@@ -213,24 +220,6 @@ class Backend:
 
         # Update phase response plot
         self.phase_curve.setData(w, np.angle(h))
-
-    def plot_responses(self):
-        zeros_array = np.array([complex(z.x(), z.y()) for z in self.zeros_positions])
-        poles_array = np.array([complex(p.x(), p.y()) for p in self.poles_positions])
-
-        numerator, denominator = zpk2tf(zeros_array, poles_array, 1)
-        w, h = freqz(numerator, denominator)
-
-        # Update magnitude response plot
-        self.ui.magFrequencyResponse.clear()
-        self.ui.magFrequencyResponse.setLogMode(x=True, y=True)
-        self.ui.magFrequencyResponse.plot(w, 20 * np.log10(abs(h)), pen="b")
-
-        # Update phase response plot
-        self.ui.phaseFrequencyResponse.clear()
-        self.ui.phaseFrequencyResponse.setLogMode(x=True, y=False)
-        self.ui.phaseFrequencyResponse.plot(w, np.angle(h), pen="r")
-        self.update_responses()
 
     # APPLICATION SIGNALS PLOTTING
     def import_signal(self):

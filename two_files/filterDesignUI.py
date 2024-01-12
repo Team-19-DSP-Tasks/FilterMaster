@@ -265,7 +265,7 @@ class Ui_FilterDesigner(object):
         self.magFrequencyResponse.setObjectName("magFrequencyResponse")
         self.magFrequencyResponse.setTitle("Filter Magnitude Response")
         self.magFrequencyResponse.setLabel("bottom", "Frequency (rad/sample)")
-        self.magFrequencyResponse.setLabel("left", "Phase (radians)")
+        self.magFrequencyResponse.setLabel("left", "Magnitude (dB)")
         self.verticalLayout_3.addWidget(self.magFrequencyResponse)
         self.phaseFrequencyResponse = PlotWidget(self.frequencyResponseGroupBox)
         self.phaseFrequencyResponse.setMaximumSize(QtCore.QSize(16777215, 16777215))
