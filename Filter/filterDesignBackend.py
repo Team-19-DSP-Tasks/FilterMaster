@@ -9,6 +9,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
 from pyqtgraph import TargetItem
+from scipy import signal
 from scipy.signal import freqz, zpk2tf
 
 
@@ -59,6 +60,7 @@ class Backend:
         self.ui.removeAllPoles.clicked.connect(lambda: self.remove_poles())
         self.ui.removeAllZeros.clicked.connect(lambda: self.remove_zeros())
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
+        self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
         self.ui.addConjugatesCheckBox.stateChanged.connect(
             lambda state: self.handle_conjugates()
         )
@@ -80,6 +82,11 @@ class Backend:
         self.zeros_positions = []
         self.poles_conjugates_positions = []
         self.zeros_conjugates_positions = []
+        # For Filter Calculations
+        self.zeros_array = None
+        self.poles_array = None
+        self.numerator = None
+        self.denominator = None
         # For plotting magnitude and phase responses
         self.mag_curve = pg.PlotCurveItem(pen="b")
         self.phase_curve = pg.PlotCurveItem(pen="r")
@@ -93,6 +100,9 @@ class Backend:
         self.originial_signal_timer.start(self.update_interval)
         self.signal_index = 0
         self.predefined_data = np.loadtxt(
+            "signals/leadII_ecg_fibrillation.csv", delimiter=","
+        )
+        self.filtered_signal = np.loadtxt(
             "signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
 
@@ -235,18 +245,22 @@ class Backend:
     # PLOT MAGNITUDE AND PHASE RESPONSES
     def update_responses(self):
         # Get poles and zeros positions
-        zeros_array = np.array([complex(z.x(), z.y()) for z in self.zeros_positions])
-        poles_array = np.array([complex(p.x(), p.y()) for p in self.poles_positions])
+        self.zeros_array = np.array(
+            [complex(z.x(), z.y()) for z in self.zeros_positions]
+        )
+        self.poles_array = np.array(
+            [complex(p.x(), p.y()) for p in self.poles_positions]
+        )
 
         # Calculate magnitude and phase responses
-        numerator, denominator = zpk2tf(zeros_array, poles_array, 1)
-        w, h = freqz(numerator, denominator)
+        self.numerator, self.denominator = zpk2tf(self.zeros_array, self.poles_array, 1)
+        frequencies_values, response_complex = freqz(self.numerator, self.denominator)
 
         # Update magnitude response plot
-        self.mag_curve.setData(w, 20 * np.log10(abs(h)))
+        self.mag_curve.setData(frequencies_values, 20 * np.log10(abs(response_complex)))
 
         # Update phase response plot
-        self.phase_curve.setData(w, np.angle(h))
+        self.phase_curve.setData(frequencies_values, np.angle(response_complex))
 
     # APPLICATION SIGNALS PLOTTING
     def import_signal(self):
@@ -304,3 +318,10 @@ class Backend:
             xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
         )
         self.ui.originalApplicationSignal.setXRange(*visible_range, padding=0)
+
+    def apply_filter(self):
+        self.filtered_signal = signal.lfilter(
+            self.numerator, self.denominator, self.predefined_data
+        ).real
+        self.signal_index = 0
+        self.originial_signal_timer.start(self.update_interval)
