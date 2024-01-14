@@ -7,7 +7,7 @@ import pyqtgraph as pg
 import wfdb
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
 from pyqtgraph import TargetItem
 from scipy.signal import freqz, zpk2tf
 
@@ -20,6 +20,43 @@ logging.basicConfig(
 # Add an empty line to the log file
 with open("log.log", "a") as log_file:
     log_file.write("\n")
+
+
+class CustomTargetItem(pg.TargetItem):
+    def __init__(
+        self,
+        plot,
+        *args,
+        **kwargs,
+    ):
+        # poles,
+        # poles_positions,
+        # poles_conjugates,
+        # poles_conjugates_positions,
+        super().__init__(*args, **kwargs)
+        self.plot = plot
+        # self.poles = poles
+        # self.poles_positions = poles_positions
+        # self.poles_conjugates = poles_conjugates
+        # self.poles_conjugates_positions = poles_conjugates_positions
+
+    def mouseClickEvent(self, event):
+        if event.button() == pg.QtCore.Qt.RightButton:
+            self.contextMenuEvent(event)
+
+    def contextMenuEvent(self, event):
+        contextMenu = QMenu()
+        removeAction = QAction("Remove", None)
+        removeAction.triggered.connect(self.remove)
+        contextMenu.addAction(removeAction)
+        contextMenu.exec_(event.screenPos())
+
+    def remove(self):
+        self.plot.removeItem(self)
+        # self.poles.remove(self)
+        # self.poles_positions.remove(self.pos())
+        # self.poles_conjugates.remove(self)
+        # self.poles_conjugates_positions.remove(self.pos())
 
 
 class Backend:
