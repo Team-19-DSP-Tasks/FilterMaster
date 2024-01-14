@@ -11,16 +11,6 @@ from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
 from pyqtgraph import TargetItem
 from scipy.signal import freqz, zpk2tf
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    filename="log.log",
-    format="%(asctime)s - %(levelname)s - %(message)s",
-)
-
-# Add an empty line to the log file
-with open("log.log", "a") as log_file:
-    log_file.write("\n")
-
 
 class CustomTargetItem(pg.TargetItem):
     def __init__(
