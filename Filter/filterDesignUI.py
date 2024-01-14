@@ -9,6 +9,7 @@
 
 import pyqtgraph as pg
 from filterDesignBackend import Backend
+from libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 from pyqtgraph import PlotWidget
 
@@ -147,7 +148,8 @@ class Ui_FilterDesigner(object):
         self.pushButton.setObjectName("pushButton")
         self.verticalLayout_4.addWidget(self.pushButton)
         self.verticalLayout_8.addWidget(self.allPassDesignGroupBox)
-        self.addedAllPassList = QtWidgets.QListWidget(self.dockWidgetContents_3)
+        # self.dockWidgetContents_3
+        self.addedAllPassList = ListWidgetWithContextMenu()
         self.addedAllPassList.setObjectName("addedAllPassList")
         self.verticalLayout_8.addWidget(self.addedAllPassList)
         self.allPassPhaseResponse = PlotWidget(self.dockWidgetContents_3)
@@ -163,6 +165,8 @@ class Ui_FilterDesigner(object):
         self.dockWidget_3.setObjectName("dockWidget_3")
         self.dockWidgetContents_4 = QtWidgets.QWidget()
         self.dockWidgetContents_4.setObjectName("dockWidgetContents_4")
+        self.dockWidgetContents_4.setMinimumSize(QtCore.QSize(400, 0))
+        self.dockWidgetContents_4.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.dockWidgetContents_4)
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.filterDesignGroupBox = QtWidgets.QGroupBox(self.dockWidgetContents_4)
@@ -309,6 +313,55 @@ class Ui_FilterDesigner(object):
         self.menubar.addAction(self.menuView_2.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
+        self.allPass01 = ProcessButton(
+            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+        )
+        self.allPass02 = ProcessButton(
+            "a = 1+2j",
+            "All-Pass_Phase_Responses\phase_response_1.png",
+            4,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass03 = ProcessButton(
+            "a = 0.3+0.2j",
+            "All-Pass_Phase_Responses\phase_response_2.png",
+            4,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass04 = ProcessButton(
+            "a = 1.5j",
+            "All-Pass_Phase_Responses\phase_response_3.png",
+            4,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass05 = ProcessButton(
+            "a = 5+1j",
+            "All-Pass_Phase_Responses\phase_response_4.png",
+            4,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass06 = ProcessButton(
+            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+        )
+        self.allPass07 = ProcessButton(
+            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+        )
+        self.allPass08 = ProcessButton(
+            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+        )
+        self.allPass09 = ProcessButton(
+            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+        )
+        self.gridLayout.addWidget(self.allPass01, 0, 0, 1, 1)
+        self.gridLayout.addWidget(self.allPass02, 0, 1, 1, 1)
+        self.gridLayout.addWidget(self.allPass03, 0, 2, 1, 1)
+        self.gridLayout.addWidget(self.allPass04, 1, 0, 1, 1)
+        self.gridLayout.addWidget(self.allPass05, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.allPass06, 1, 2, 1, 1)
+        self.gridLayout.addWidget(self.allPass07, 2, 0, 1, 1)
+        self.gridLayout.addWidget(self.allPass08, 2, 1, 1, 1)
+        self.gridLayout.addWidget(self.allPass09, 2, 2, 1, 1)
+
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)
 
@@ -363,11 +416,52 @@ class Ui_FilterDesigner(object):
         self.actionImport_Signal.setText(_translate("FilterDesigner", "Import Signal"))
 
 
+class ListWidgetWithContextMenu(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+
+        self.initUI()
+
+    def initUI(self):
+        self.list_widget = QtWidgets.QListWidget(self)
+        self.list_widget.addItems(["Item 1", "Item 2", "Item 3", "Item 4"])
+
+        # Set up the context menu
+        self.context_menu = QtWidgets.QMenu(self)
+        remove_action = QtWidgets.QAction("Remove", self)
+        remove_action.triggered.connect(self.removeSelectedItem)
+        self.context_menu.addAction(remove_action)
+
+        # Connect the context menu to the list widget
+        self.list_widget.setContextMenuPolicy(
+            3
+        )  # Set context menu policy to CustomContextMenu
+        self.list_widget.customContextMenuRequested.connect(self.showContextMenu)
+
+        # Set up the layout
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.addWidget(self.list_widget)
+
+        self.setGeometry(100, 100, 300, 200)
+        self.setWindowTitle("List Widget with Context Menu")
+        self.show()
+
+    def showContextMenu(self, pos):
+        # Show the context menu at the specified position
+        self.context_menu.exec_(self.list_widget.mapToGlobal(pos))
+
+    def removeSelectedItem(self):
+        # Remove the selected item from the list widget
+        selected_item = self.list_widget.currentItem()
+        if selected_item is not None:
+            self.list_widget.takeItem(self.list_widget.row(selected_item))
+
+
 if __name__ == "__main__":
     import sys
 
     app = QtWidgets.QApplication(sys.argv)
-    with open("two_files\stylesheet.qss", "r") as f:
+    with open("Filter\stylesheet.qss", "r") as f:
         stylesheet = f.read()
         app.setStyleSheet(stylesheet)
     FilterDesigner = QtWidgets.QMainWindow()
