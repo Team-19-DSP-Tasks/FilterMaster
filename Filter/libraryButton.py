@@ -25,7 +25,7 @@ class ProcessButton(QPushButton):
 
         icon_label = QLabel()
         icon_label.setAlignment(Qt.AlignCenter)
-        icon_label.setPixmap(QPixmap(image_path).scaled(50, 50, Qt.KeepAspectRatio))
+        icon_label.setPixmap(QPixmap(image_path).scaled(75, 75, Qt.KeepAspectRatio))
         layout.addWidget(icon_label)
 
         text_label = QLabel(name)
