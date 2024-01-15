@@ -7,7 +7,7 @@ import pandas as pd
 import pyqtgraph as pg
 import wfdb
 from libraryButton import ProcessButton
-from PyQt5 import QtCore
+from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
 from pyqtgraph import TargetItem
@@ -17,43 +17,6 @@ from scipy.signal import freqz, zpk2tf
 # A folder to store the phase response plots of all-pass filters
 save_directory = "All-Pass-Phase-Responses"
 os.makedirs(save_directory, exist_ok=True)
-
-
-class CustomTargetItem(pg.TargetItem):
-    def __init__(
-        self,
-        plot,
-        *args,
-        **kwargs,
-    ):
-        # poles,
-        # poles_positions,
-        # poles_conjugates,
-        # poles_conjugates_positions,
-        super().__init__(*args, **kwargs)
-        self.plot = plot
-        # self.poles = poles
-        # self.poles_positions = poles_positions
-        # self.poles_conjugates = poles_conjugates
-        # self.poles_conjugates_positions = poles_conjugates_positions
-
-    def mouseClickEvent(self, event):
-        if event.button() == pg.QtCore.Qt.RightButton:
-            self.contextMenuEvent(event)
-
-    def contextMenuEvent(self, event):
-        contextMenu = QMenu()
-        removeAction = QAction("Remove", None)
-        removeAction.triggered.connect(self.remove)
-        contextMenu.addAction(removeAction)
-        contextMenu.exec_(event.screenPos())
-
-    def remove(self):
-        self.plot.removeItem(self)
-        # self.poles.remove(self)
-        # self.poles_positions.remove(self.pos())
-        # self.poles_conjugates.remove(self)
-        # self.poles_conjugates_positions.remove(self.pos())
 
 
 class Backend:
@@ -68,11 +31,18 @@ class Backend:
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
         self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
+        self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
+        self.ui.pause_play_button.toggled.connect(
+            lambda checked: self.pause_play_action(checked)
+        )
         self.ui.addConjugatesCheckBox.stateChanged.connect(
             lambda state: self.handle_conjugates()
         )
         self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: self.handle_unit_circle_click(event)
+        )
+        self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
+            lambda event: self.create_context_menu(event)
         )
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
 
@@ -89,6 +59,8 @@ class Backend:
         self.zeros_positions = []
         self.poles_conjugates_positions = []
         self.zeros_conjugates_positions = []
+        # Remove a specific zero or pole
+        self.clicked_position = None
         # For Filter Calculations
         self.zeros_array = None
         self.poles_array = None
@@ -161,8 +133,8 @@ class Backend:
         self.update_responses()
 
     def handle_unit_circle_click(self, event):
+        pos = self.ui.unitCirclePlot.mapToView(event.scenePos())
         if event.button() == QtCore.Qt.LeftButton:
-            pos = self.ui.unitCirclePlot.mapToView(event.scenePos())
             if self.is_pole:
                 self.draw_item(
                     pos,
@@ -181,6 +153,10 @@ class Backend:
                     self.zeros_positions,
                     self.zeros_conjugates_positions,
                 )
+
+        elif event.button() == QtCore.Qt.RightButton:
+            self.clicked_position = pos
+
         if self.ui.addConjugatesCheckBox.isChecked():
             if self.is_pole:
                 self.draw_conjugates([self.poles_conjugates_positions[-1]], "x", "b")
@@ -203,6 +179,37 @@ class Backend:
                 self.zeros_conjugates[index].setPos(
                     self.zeros_conjugates_positions[index]
                 )
+        self.update_responses()
+
+    # Remove a specific zero or pole
+    def create_context_menu(self, event):
+        if self.clicked_position is not None:
+            # Context Menu to delete a specific zero or pole
+            self.context_menu = QMenu()
+            self.remove_action = QAction("Remove")
+            # Connect the signal before executing the context menu
+            self.remove_action.triggered.connect(lambda: self.remove_item())
+            self.context_menu.addAction(self.remove_action)
+            self.context_menu.exec_(QtGui.QCursor.pos())
+
+    def remove_item(self):
+        tolerance = 0.1
+        for pole_pos in self.poles_positions:
+            if (pole_pos - self.clicked_position).manhattanLength() < tolerance:
+                index = self.poles_positions.index(pole_pos)
+                item = self.poles[index]
+                self.ui.unitCirclePlot.removeItem(item)
+                self.poles.remove(item)
+                self.poles_positions.remove(pole_pos)
+
+        for zero_pos in self.zeros_positions:
+            if (zero_pos - self.clicked_position).manhattanLength() < tolerance:
+                index = self.zeros_positions.index(zero_pos)
+                item = self.zeros[index]
+                self.ui.unitCirclePlot.removeItem(item)
+                self.zeros.remove(item)
+                self.zeros_positions.remove(zero_pos)
+
         self.update_responses()
 
     # REMOVE All Zeros/Poles and RESET Design
@@ -349,6 +356,18 @@ class Backend:
             xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
         )
         plot_widget.setXRange(*visible_range, padding=0)
+
+    def update_speed(self):
+        points_value = self.ui.speed_slider.value()
+        self.ui.speed_label.setText(f"Points: {points_value}")
+
+    def pause_play_action(self, checked):
+        if checked:
+            self.real_time_timer.stop()
+            self.ui.pause_play_button.setIcon(QtGui.QIcon("Icons/play_button.png"))
+        else:
+            self.real_time_timer.start(self.update_interval)
+            self.ui.pause_play_button.setIcon(QtGui.QIcon("Icons/pause_button.png"))
 
     def apply_filter(self):
         self.filtered_data = signal.lfilter(

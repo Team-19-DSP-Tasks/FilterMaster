@@ -231,6 +231,7 @@ class Ui_FilterDesigner(object):
         self.unitCirclePlot.setMinimumSize(QtCore.QSize(150, 150))
         self.unitCirclePlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.unitCirclePlot.setObjectName("unitCirclePlot")
+        self.unitCirclePlot.setMenuEnabled(False)
 
         # Create a CircleROI
         circle_roi = pg.CircleROI(
@@ -361,19 +362,19 @@ class Ui_FilterDesigner(object):
             "Z-Plane Filter Design", FilterDesigner
         )
         self.toggle_dock1_action.setCheckable(True)
-        self.toggle_dock1_action.setChecked(True)  # Dock 1 is initially visible
+        self.toggle_dock1_action.setChecked(True)
         self.toggle_dock1_action.triggered.connect(
             lambda: self.toggle_dock_visibility(self.dockWidget_3)
         )
-        self.menuView_2.addAction(self.toggle_dock1_action)  # Add action to menu
+        self.menuView_2.addAction(self.toggle_dock1_action)
 
         self.toggle_dock2_action = QtWidgets.QAction("All-Pass Library", FilterDesigner)
         self.toggle_dock2_action.setCheckable(True)
-        self.toggle_dock2_action.setChecked(True)  # Dock 2 is initially visible
+        self.toggle_dock2_action.setChecked(True)
         self.toggle_dock2_action.triggered.connect(
             lambda: self.toggle_dock_visibility(self.allPassLibrary)
         )
-        self.menuView_2.addAction(self.toggle_dock2_action)  # Add action to menu
+        self.menuView_2.addAction(self.toggle_dock2_action)
 
         self.allPass00 = ProcessButton(
             "a = 0.7",
@@ -430,6 +431,48 @@ class Ui_FilterDesigner(object):
             self.scrollAreaWidgetContents,
         )
 
+        ### Plotting Controls
+        #####################
+        self.pause_play_button = QtWidgets.QPushButton()
+        self.pause_play_button.setCheckable(True)
+        self.pause_play_button.setObjectName("pause_play_button")
+        self.pause_play_button.setIcon(QtGui.QIcon("Icons/pause_button.png"))
+        spacerItem4 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
+        spacerItem5 = QtWidgets.QSpacerItem(
+            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        )
+        self.speed_label = QtWidgets.QLabel("Points: 1")
+        self.speed_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.speed_slider.setFixedWidth(300)
+        self.speed_slider.setMinimum(1)
+        self.speed_slider.setMaximum(100)
+        self.speed_slider.setValue(1)
+        self.speed_slider.setTickInterval(1)
+        self.speed_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.label_min = QtWidgets.QLabel(
+            str(self.speed_slider.minimum()), FilterDesigner
+        )
+        self.label_max = QtWidgets.QLabel(
+            str(self.speed_slider.maximum()), FilterDesigner
+        )
+        self.label_min.setAlignment(QtCore.Qt.AlignLeft)
+        self.label_max.setAlignment(QtCore.Qt.AlignRight)
+        self.speedLabelsHorizontalLayout = QtWidgets.QHBoxLayout()
+        self.speedLabelsHorizontalLayout.addWidget(self.label_min)
+        self.speedLabelsHorizontalLayout.addWidget(self.label_max)
+        self.speedControllerVerticalLayout = QtWidgets.QVBoxLayout()
+        self.speedControllerVerticalLayout.addWidget(self.speed_label)
+        self.speedControllerVerticalLayout.addWidget(self.speed_slider)
+        self.speedControllerVerticalLayout.addLayout(self.speedLabelsHorizontalLayout)
+        self.speedHLayout = QtWidgets.QHBoxLayout()
+        self.speedHLayout.addItem(spacerItem4)
+        self.speedHLayout.addWidget(self.pause_play_button)
+        self.speedHLayout.addLayout(self.speedControllerVerticalLayout)
+        self.speedHLayout.addItem(spacerItem5)
+        self.verticalLayout_7.addLayout(self.speedHLayout)
+
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)
 
@@ -475,7 +518,7 @@ class Ui_FilterDesigner(object):
         self.addPole.setText(_translate("FilterDesigner", "Add Pole"))
         self.addZero.setText(_translate("FilterDesigner", "Add Zero"))
         self.removeAllPoles.setText(_translate("FilterDesigner", "Remove all Poles"))
-        self.removeAllZeros.setText(_translate("FilterDesigner", "Remove all Zeroes"))
+        self.removeAllZeros.setText(_translate("FilterDesigner", "Remove all Zeros"))
         self.resetDesign.setText(_translate("FilterDesigner", "Reset Design"))
         self.addConjugatesCheckBox.setText(
             _translate("FilterDesigner", "Add Conjugates")
