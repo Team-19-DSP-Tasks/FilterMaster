@@ -356,6 +356,25 @@ class Ui_FilterDesigner(object):
         self.menubar.addAction(self.menuView_2.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
+        # View menubar: show or hide dockwidgets
+        self.toggle_dock1_action = QtWidgets.QAction(
+            "Z-Plane Filter Design", FilterDesigner
+        )
+        self.toggle_dock1_action.setCheckable(True)
+        self.toggle_dock1_action.setChecked(True)  # Dock 1 is initially visible
+        self.toggle_dock1_action.triggered.connect(
+            lambda: self.toggle_dock_visibility(self.dockWidget_3)
+        )
+        self.menuView_2.addAction(self.toggle_dock1_action)  # Add action to menu
+
+        self.toggle_dock2_action = QtWidgets.QAction("All-Pass Library", FilterDesigner)
+        self.toggle_dock2_action.setCheckable(True)
+        self.toggle_dock2_action.setChecked(True)  # Dock 2 is initially visible
+        self.toggle_dock2_action.triggered.connect(
+            lambda: self.toggle_dock_visibility(self.allPassLibrary)
+        )
+        self.menuView_2.addAction(self.toggle_dock2_action)  # Add action to menu
+
         self.allPass00 = ProcessButton(
             "a = 0.7",
             "All-Pass-Phase-Responses\phase_response_0.png",
@@ -466,6 +485,12 @@ class Ui_FilterDesigner(object):
             _translate("FilterDesigner", "Frequency Response")
         )
         self.actionImport_Signal.setText(_translate("FilterDesigner", "Import Signal"))
+
+    def toggle_dock_visibility(self, dock):
+        if dock.isVisible():
+            dock.close()
+        else:
+            dock.show()
 
 
 if __name__ == "__main__":
