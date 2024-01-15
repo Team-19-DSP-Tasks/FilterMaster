@@ -102,17 +102,16 @@ class Backend:
         self.ui.phaseFrequencyResponse.addItem(self.phase_curve)
         # Global Variables for real time plotting
         self.update_interval = 50
-        self.originial_signal_timer = QTimer()
-        self.originial_signal_timer.timeout.connect(self.update_plot)
-        self.originial_signal_timer.start(self.update_interval)
+        self.real_time_timer = QTimer()
+        self.real_time_timer.timeout.connect(self.update_real_time_plots)
+        self.real_time_timer.start(self.update_interval)
         self.signal_index = 0
-        self.predefined_data = np.loadtxt(
+        self.original_data = np.loadtxt(
             "signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
-        self.filtered_signal = np.loadtxt(
-            "signals/leadII_ecg_fibrillation.csv", delimiter=","
-        )
+        self.filtered_data = self.original_data
         # All-Pass Library
+        self.user_inputs_values = []
         self.idx = 9  # to accurately name the plot response of all-pass filter
         self.cascaded_filters = []
         self.all_pass_filters = [
@@ -306,53 +305,57 @@ class Backend:
                 if file_path.endswith(".hea") or file_path.endswith(".dat"):
                     # Read signal data from .hea and .dat files using wfdb library
                     record = wfdb.rdrecord(file_path[:-4])  # Remove ".hea" extension
-                    self.predefined_data = record.p_signal[
-                        :, 0
-                    ]  # Use the first channel
+                    self.original_data = record.p_signal[:, 0]  # Use the first channel
+                    self.filtered_data = self.original_data
 
                 elif file_path.endswith(".csv"):
                     # Use pandas to read the CSV file
                     data_frame = pd.read_csv(file_path)
                     # Use the first column as the signal data
-                    self.predefined_data = data_frame.iloc[:, 0].to_numpy()
+                    self.original_data = data_frame.iloc[:, 0].to_numpy()
+                    self.filtered_data = self.original_data
                 else:
                     pass
 
-                self.signal_index = (
-                    0  # Reset the signal index when a new signal is imported
-                )
+                # Reset the signal index when a new signal is imported
+                self.signal_index = 0
                 self.update_plot()  # Use the new signal data for real-time plotting
-                self.originial_signal_timer.start(self.update_interval)
+                self.real_time_timer.start(self.update_interval)
             except Exception as e:
                 print(f"Error loading the file: {e}")
 
-    def update_plot(self):
-        self.ui.originalApplicationSignal.clear()
+    def update_real_time_plots(self):
+        self.update_plot(self.ui.originalApplicationSignal, self.original_data)
+        self.update_plot(self.ui.filteredSignal, self.filtered_data)
+
+    def update_plot(self, plot_widget, signal_data):
+        plot_widget.clear()
         self.signal_index += 1
-        if self.signal_index >= len(self.predefined_data):
+        if self.signal_index >= len(signal_data):
             self.signal_index = 0
+
         x_data = np.arange(self.signal_index)
-        y_data = self.predefined_data[: self.signal_index]
+        y_data = signal_data[: self.signal_index]
         y_max = max(y_data)
         y_min = min(y_data)
-        self.ui.originalApplicationSignal.plot(x=x_data, y=y_data, pen="orange")
-        self.ui.originalApplicationSignal.setYRange(y_min, y_max, padding=0.1)
-        # Calculate the visible range for the X-axis based on the current signal_index
+
+        plot_widget.plot(x=x_data, y=y_data, pen="orange")
+        plot_widget.setYRange(y_min, y_max, padding=0.1)
+
         visible_range = (self.signal_index - 150, self.signal_index)
-        # Set the X-axis limits to control the visible range
-        x_min_limit = 0
-        x_max_limit = self.signal_index + 0.1
-        self.ui.originalApplicationSignal.setLimits(
+        x_min_limit, x_max_limit = 0, self.signal_index + 0.1
+
+        plot_widget.setLimits(
             xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
         )
-        self.ui.originalApplicationSignal.setXRange(*visible_range, padding=0)
+        plot_widget.setXRange(*visible_range, padding=0)
 
     def apply_filter(self):
-        self.filtered_signal = signal.lfilter(
-            self.numerator, self.denominator, self.predefined_data
+        self.filtered_data = signal.lfilter(
+            self.numerator, self.denominator, self.original_data
         ).real
         self.signal_index = 0
-        self.originial_signal_timer.start(self.update_interval)
+        self.real_time_timer.start(self.update_interval)
 
     # ORGANIZING ALL-PASS lIBRARY
     def organize_library(self, scrollAreaLayout, filtersList):
@@ -379,33 +382,37 @@ class Backend:
         # Get the value entered in the text field
         value = self.ui.allPassEnteredValue.text()
 
-        # Plot the phase response of the all-pass filter
-        plot_image_path = self.plot_all_pass_filter(value)
+        # Check first if the filter doesn't already exist to avoid redundancy of same filter
+        if value not in self.user_inputs_values:
+            self.user_inputs_values.append(value)
 
-        # Instantiate a library button
-        button_number = str(self.idx)
-        button_name = f"allPass0{button_number}"
-        button_text = f"a = {value}"
-        button = ProcessButton(button_text, plot_image_path, value)
-        # Set the button name
-        button.setObjectName(button_name)
+            # Plot the phase response of the all-pass filter
+            plot_image_path = self.plot_all_pass_filter(value)
 
-        # Add the button to the cascaded filters
-        self.cascaded_filters.append(button)
+            # Instantiate a library button
+            button_number = str(self.idx)
+            button_name = f"allPass0{button_number}"
+            button_text = f"a = {value}"
+            button = ProcessButton(button_text, plot_image_path, value)
+            # Set the button name
+            button.setObjectName(button_name)
 
-        # Set the button to checked initially
-        button.setChecked(True)
+            # Add the button to the cascaded filters
+            self.cascaded_filters.append(button)
 
-        # Connect the button to the organizing library function
-        button.toggled.connect(
-            lambda checked, button=button: self.on_filter_chosen(checked, button)
-        )
+            # Set the button to checked initially
+            button.setChecked(True)
 
-        # call the organize libraries function
-        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
-        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
-        # Increment the index in case the user adds another custom filter
-        self.idx += 1
+            # Connect the button to the organizing library function
+            button.toggled.connect(
+                lambda checked, button=button: self.on_filter_chosen(checked, button)
+            )
+
+            # call the organize libraries function
+            self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+            self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+            # Increment the index in case the user adds another custom filter
+            self.idx += 1
 
     def plot_all_pass_filter(self, value):
         a_complex = complex(value)

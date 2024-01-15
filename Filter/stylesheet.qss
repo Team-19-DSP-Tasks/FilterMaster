@@ -24,6 +24,16 @@ QWidget:item:selected
     background-color: QLinearGradient( x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #ffa02f, stop: 1 #d7801a);
 }
 
+QWidget#scrollAreaWidgetContents
+{
+    border-radius: 5px;
+}
+
+QWidget#scrollAreaWidgetContents_2
+{
+    border-radius: 5px;
+}
+
 QListWidget {
     background-color: #ffffff; /* Change this to your preferred color */
     border: 1px solid #000000; /* Change this to your preferred color and size */
@@ -318,6 +328,12 @@ QDockWidget::close-button:hover, QDockWidget::float-button:hover {
 QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
     background: green;
     padding: 1px -1px -1px 1px;
+}
+
+QScrollArea
+{
+    border: 1px solid grey;
+    border-radius: 5px;
 }
 
 QMainWindow::separator
