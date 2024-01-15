@@ -121,6 +121,28 @@ class Ui_FilterDesigner(object):
         self.gridLayout.setObjectName("gridLayout")
         self.allPassLibraryScrollArea.setWidget(self.scrollAreaWidgetContents)
         self.verticalLayout_8.addWidget(self.allPassLibraryScrollArea)
+
+        self.CascadedLabel = QtWidgets.QLabel(self.dockWidgetContents_3)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.CascadedLabel.setFont(font)
+        self.CascadedLabel.setAlignment(QtCore.Qt.AlignLeft)
+        self.CascadedLabel.setObjectName("label")
+        self.verticalLayout_8.addWidget(self.CascadedLabel)
+
+        self.allPassCascaded = QtWidgets.QScrollArea(self.dockWidgetContents_3)
+        self.allPassCascaded.setWidgetResizable(True)
+        self.allPassCascaded.setObjectName("allPassCascaded")
+        self.scrollAreaWidgetContents_2 = QtWidgets.QWidget()
+        self.scrollAreaWidgetContents_2.setGeometry(QtCore.QRect(0, 0, 417, 95))
+        self.scrollAreaWidgetContents_2.setObjectName("scrollAreaWidgetContents_2")
+        self.gridLayoutForCascaded = QtWidgets.QGridLayout(
+            self.scrollAreaWidgetContents_2
+        )
+        self.gridLayoutForCascaded.setObjectName("gridLayoutForCascaded")
+        self.allPassCascaded.setWidget(self.scrollAreaWidgetContents_2)
+        self.verticalLayout_8.addWidget(self.allPassCascaded)
+
         self.allPassDesignGroupBox = QtWidgets.QGroupBox(self.dockWidgetContents_3)
         font = QtGui.QFont()
         font.setFamily("Open Sans")
@@ -140,18 +162,15 @@ class Ui_FilterDesigner(object):
         self.inputALabel.setFont(font)
         self.inputALabel.setObjectName("inputALabel")
         self.horizontalLayout.addWidget(self.inputALabel)
-        self.doubleSpinBox = QtWidgets.QDoubleSpinBox(self.allPassDesignGroupBox)
-        self.doubleSpinBox.setObjectName("doubleSpinBox")
-        self.horizontalLayout.addWidget(self.doubleSpinBox)
+        self.allPassEnteredValue = QtWidgets.QLineEdit(self.allPassDesignGroupBox)
+        self.allPassEnteredValue.setObjectName("textField")
+        self.horizontalLayout.addWidget(self.allPassEnteredValue)
         self.verticalLayout_4.addLayout(self.horizontalLayout)
-        self.pushButton = QtWidgets.QPushButton(self.allPassDesignGroupBox)
-        self.pushButton.setObjectName("pushButton")
-        self.verticalLayout_4.addWidget(self.pushButton)
+        self.addAllPassFilter = QtWidgets.QPushButton(self.allPassDesignGroupBox)
+        self.addAllPassFilter.setObjectName("pushButton")
+        self.verticalLayout_4.addWidget(self.addAllPassFilter)
         self.verticalLayout_8.addWidget(self.allPassDesignGroupBox)
         # self.dockWidgetContents_3
-        self.addedAllPassList = ListWidgetWithContextMenu()
-        self.addedAllPassList.setObjectName("addedAllPassList")
-        self.verticalLayout_8.addWidget(self.addedAllPassList)
         self.allPassPhaseResponse = PlotWidget(self.dockWidgetContents_3)
         self.allPassPhaseResponse.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.allPassPhaseResponse.setObjectName("allPassPhaseResponse")
@@ -313,54 +332,60 @@ class Ui_FilterDesigner(object):
         self.menubar.addAction(self.menuView_2.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
+        self.allPass00 = ProcessButton(
+            "a = 0.7",
+            "All-Pass-Phase-Responses\phase_response_0.png",
+            0.7,
+            self.scrollAreaWidgetContents,
+        )
         self.allPass01 = ProcessButton(
-            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+            "a = 1+2j",
+            "All-Pass-Phase-Responses\phase_response_1.png",
+            1 + 2j,
+            self.scrollAreaWidgetContents,
         )
         self.allPass02 = ProcessButton(
-            "a = 1+2j",
-            "All-Pass_Phase_Responses\phase_response_1.png",
-            4,
+            "a = 0.3+0.2j",
+            "All-Pass-Phase-Responses\phase_response_2.png",
+            0.3 + 0.2j,
             self.scrollAreaWidgetContents,
         )
         self.allPass03 = ProcessButton(
-            "a = 0.3+0.2j",
-            "All-Pass_Phase_Responses\phase_response_2.png",
-            4,
+            "a = 1.5j",
+            "All-Pass-Phase-Responses\phase_response_3.png",
+            1.5j,
             self.scrollAreaWidgetContents,
         )
         self.allPass04 = ProcessButton(
-            "a = 1.5j",
-            "All-Pass_Phase_Responses\phase_response_3.png",
-            4,
+            "a = 5+1j",
+            "All-Pass-Phase-Responses\phase_response_4.png",
+            5 + 1j,
             self.scrollAreaWidgetContents,
         )
         self.allPass05 = ProcessButton(
-            "a = 5+1j",
-            "All-Pass_Phase_Responses\phase_response_4.png",
-            4,
+            "a = -0.9",
+            "All-Pass-Phase-Responses\phase_response_5.png",
+            -0.9,
             self.scrollAreaWidgetContents,
         )
         self.allPass06 = ProcessButton(
-            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+            "a = 1.2",
+            "All-Pass-Phase-Responses\phase_response_6.png",
+            1.2,
+            self.scrollAreaWidgetContents,
         )
         self.allPass07 = ProcessButton(
-            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+            "a = 3",
+            "All-Pass-Phase-Responses\phase_response_7.png",
+            3,
+            self.scrollAreaWidgetContents,
         )
         self.allPass08 = ProcessButton(
-            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
+            "a = 0.2",
+            "All-Pass-Phase-Responses\phase_response_8.png",
+            0.2,
+            self.scrollAreaWidgetContents,
         )
-        self.allPass09 = ProcessButton(
-            "a = 4", "Icons\processing.png", 4, self.scrollAreaWidgetContents
-        )
-        self.gridLayout.addWidget(self.allPass01, 0, 0)
-        self.gridLayout.addWidget(self.allPass02, 0, 1)
-        self.gridLayout.addWidget(self.allPass03, 0, 2)
-        self.gridLayout.addWidget(self.allPass04, 1, 0)
-        self.gridLayout.addWidget(self.allPass05, 1, 1)
-        self.gridLayout.addWidget(self.allPass06, 1, 2)
-        self.gridLayout.addWidget(self.allPass07, 2, 0)
-        self.gridLayout.addWidget(self.allPass08, 2, 1)
-        self.gridLayout.addWidget(self.allPass09, 2, 2)
 
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)
@@ -375,6 +400,9 @@ class Ui_FilterDesigner(object):
         self.label.setText(
             _translate("FilterDesigner", "Generate signal by moving your mouse")
         )
+        self.CascadedLabel.setText(
+            _translate("FilterDesigner", "Cascaded All-Pass Filters")
+        )
         self.generateSignal.setText(_translate("FilterDesigner", "Generate Signal"))
         self.menuFile.setTitle(_translate("FilterDesigner", "File"))
         self.menuHelp.setTitle(_translate("FilterDesigner", "Help"))
@@ -386,7 +414,7 @@ class Ui_FilterDesigner(object):
             _translate("FilterDesigner", "Custom All-Pass Filter")
         )
         self.inputALabel.setText(_translate("FilterDesigner", "Input 'a'"))
-        self.pushButton.setText(
+        self.addAllPassFilter.setText(
             _translate("FilterDesigner", "Add custom all-pass filter")
         )
         self.applyFilterButton_2.setText(
@@ -414,47 +442,6 @@ class Ui_FilterDesigner(object):
             _translate("FilterDesigner", "Frequency Response")
         )
         self.actionImport_Signal.setText(_translate("FilterDesigner", "Import Signal"))
-
-
-class ListWidgetWithContextMenu(QtWidgets.QWidget):
-    def __init__(self):
-        super().__init__()
-
-        self.initUI()
-
-    def initUI(self):
-        self.list_widget = QtWidgets.QListWidget(self)
-        self.list_widget.addItems(["Item 1", "Item 2", "Item 3", "Item 4"])
-
-        # Set up the context menu
-        self.context_menu = QtWidgets.QMenu(self)
-        remove_action = QtWidgets.QAction("Remove", self)
-        remove_action.triggered.connect(self.removeSelectedItem)
-        self.context_menu.addAction(remove_action)
-
-        # Connect the context menu to the list widget
-        self.list_widget.setContextMenuPolicy(
-            3
-        )  # Set context menu policy to CustomContextMenu
-        self.list_widget.customContextMenuRequested.connect(self.showContextMenu)
-
-        # Set up the layout
-        layout = QtWidgets.QVBoxLayout(self)
-        layout.addWidget(self.list_widget)
-
-        self.setGeometry(100, 100, 300, 200)
-        self.setWindowTitle("List Widget with Context Menu")
-        self.show()
-
-    def showContextMenu(self, pos):
-        # Show the context menu at the specified position
-        self.context_menu.exec_(self.list_widget.mapToGlobal(pos))
-
-    def removeSelectedItem(self):
-        # Remove the selected item from the list widget
-        selected_item = self.list_widget.currentItem()
-        if selected_item is not None:
-            self.list_widget.takeItem(self.list_widget.row(selected_item))
 
 
 if __name__ == "__main__":

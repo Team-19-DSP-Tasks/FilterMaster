@@ -1,16 +1,22 @@
 import logging
+import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import wfdb
+from libraryButton import ProcessButton
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
 from pyqtgraph import TargetItem
 from scipy import signal
 from scipy.signal import freqz, zpk2tf
+
+# A folder to store the phase response plots of all-pass filters
+save_directory = "All-Pass-Phase-Responses"
+os.makedirs(save_directory, exist_ok=True)
 
 
 class CustomTargetItem(pg.TargetItem):
@@ -61,6 +67,7 @@ class Backend:
         self.ui.removeAllZeros.clicked.connect(lambda: self.remove_zeros())
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
+        self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
         self.ui.addConjugatesCheckBox.stateChanged.connect(
             lambda state: self.handle_conjugates()
         )
@@ -105,6 +112,27 @@ class Backend:
         self.filtered_signal = np.loadtxt(
             "signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
+        # All-Pass Library
+        self.idx = 9  # to accurately name the plot response of all-pass filter
+        self.cascaded_filters = []
+        self.all_pass_filters = [
+            self.ui.allPass00,
+            self.ui.allPass01,
+            self.ui.allPass02,
+            self.ui.allPass03,
+            self.ui.allPass04,
+            self.ui.allPass05,
+            self.ui.allPass06,
+            self.ui.allPass07,
+            self.ui.allPass08,
+        ]
+
+        for btn in self.all_pass_filters:
+            btn.toggled.connect(
+                lambda checked, button=btn: self.on_filter_chosen(checked, button)
+            )
+        # Set the initial state for the buttons
+        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
 
     # CREATING Zeros and Poles
     def pole_mode(self):
@@ -325,3 +353,85 @@ class Backend:
         ).real
         self.signal_index = 0
         self.originial_signal_timer.start(self.update_interval)
+
+    # ORGANIZING ALL-PASS lIBRARY
+    def organize_library(self, scrollAreaLayout, filtersList):
+        for i, filter in enumerate(filtersList):
+            scrollAreaLayout.addWidget(filter, i // 3, i % 3)
+
+    def on_filter_chosen(self, checked, button):
+        if checked:
+            # Move the checked button from all_pass_filters to cascaded_filters
+            if button in self.all_pass_filters:
+                self.all_pass_filters.remove(button)
+                self.cascaded_filters.append(button)
+        else:
+            # Move the unchecked button from cascaded_filters to all_pass_filters
+            if button in self.cascaded_filters:
+                self.cascaded_filters.remove(button)
+                self.all_pass_filters.append(button)
+
+        # Organize both libraries after the change
+        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+
+    def add_all_pass_filter(self):
+        # Get the value entered in the text field
+        value = self.ui.allPassEnteredValue.text()
+
+        # Plot the phase response of the all-pass filter
+        plot_image_path = self.plot_all_pass_filter(value)
+
+        # Instantiate a library button
+        button_number = str(self.idx)
+        button_name = f"allPass0{button_number}"
+        button_text = f"a = {value}"
+        button = ProcessButton(button_text, plot_image_path, value)
+        # Set the button name
+        button.setObjectName(button_name)
+
+        # Add the button to the cascaded filters
+        self.cascaded_filters.append(button)
+
+        # Set the button to checked initially
+        button.setChecked(True)
+
+        # Connect the button to the organizing library function
+        button.toggled.connect(
+            lambda checked, button=button: self.on_filter_chosen(checked, button)
+        )
+
+        # call the organize libraries function
+        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+        # Increment the index in case the user adds another custom filter
+        self.idx += 1
+
+    def plot_all_pass_filter(self, value):
+        a_complex = complex(value)
+        all_pass_zeros = []
+        all_pass_poles = []
+        all_pass_poles.append(a_complex)
+        zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
+        all_pass_zeros.append(zero)
+
+        # Calculate frequency response using freqz
+        numerator, denominator = signal.zpk2tf(all_pass_zeros, all_pass_poles, 1)
+        all_pass_frequencies_values, all_pass_response_complex = signal.freqz(
+            numerator, denominator, worN=8000
+        )
+
+        # Plot the phase response
+        plt.figure()
+        plt.plot(
+            all_pass_frequencies_values,
+            np.angle(all_pass_response_complex),
+            color="orange",
+            linewidth=5,
+        )
+        plt.axis("off")
+        # Save the plot as a PNG file
+        save_path = os.path.join(save_directory, f"phase_response_{self.idx}.png")
+        plt.savefig(save_path, transparent=True)
+        plt.clf()
+        return save_path
