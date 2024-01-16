@@ -384,6 +384,8 @@ class Backend:
         ).real
         self.signal_index = 0
         self.real_time_timer.start(self.update_interval)
+        if self.ui.pause_play_button.isChecked():
+            self.ui.pause_play_button.setChecked(False)
 
     # ORGANIZING ALL-PASS lIBRARY
     def organize_library(self, scrollAreaLayout, filtersList):
