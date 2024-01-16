@@ -45,6 +45,7 @@ class Backend:
             lambda event: self.create_context_menu(event)
         )
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
+        self.ui.generateSignal.clicked.connect(self.start_generating)
 
         # To control poles and zeros creation
         self.is_pole = False
@@ -82,6 +83,9 @@ class Backend:
             "signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
         self.filtered_data = self.original_data
+        # For Mouse Signal Generation
+        self.y_points = []
+        self.mouse_signal_frequencies = []
         # All-Pass Library
         self.user_inputs_values = []
         self.idx = 9  # to accurately name the plot response of all-pass filter
@@ -183,7 +187,9 @@ class Backend:
 
     # Remove a specific zero or pole
     def create_context_menu(self, event):
-        if self.clicked_position is not None:
+        if self.clicked_position is None:
+            pass
+        else:
             # Context Menu to delete a specific zero or pole
             self.context_menu = QMenu()
             self.remove_action = QAction("Remove")
@@ -201,6 +207,7 @@ class Backend:
                 self.ui.unitCirclePlot.removeItem(item)
                 self.poles.remove(item)
                 self.poles_positions.remove(pole_pos)
+                self.clicked_position = None
 
         for zero_pos in self.zeros_positions:
             if (zero_pos - self.clicked_position).manhattanLength() < tolerance:
@@ -209,6 +216,7 @@ class Backend:
                 self.ui.unitCirclePlot.removeItem(item)
                 self.zeros.remove(item)
                 self.zeros_positions.remove(zero_pos)
+                self.clicked_position = None
 
         self.update_responses()
 
@@ -461,3 +469,15 @@ class Backend:
         plt.savefig(save_path, transparent=True)
         plt.clf()
         return save_path
+
+    # GENERATE SIGNAL BY MOUSE MOVEMENT
+    def start_generating(self):
+        self.real_time_timer.stop()
+        self.ui.originalApplicationSignal.clear()
+        self.ui.filteredSignal.clear()
+        self.ui.mousePad.frequencySignal.connect(self.capture_mouse_signal)
+
+    def capture_mouse_signal(self, frequency, y):
+        self.y_points.append(y)
+        self.mouse_signal_frequencies.append(frequency)
+        print(f"Frequency: {frequency}, Y: {y}")

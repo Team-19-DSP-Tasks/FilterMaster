@@ -8,6 +8,7 @@
 
 
 import pyqtgraph as pg
+from customPlotWidget_Mouse import CustomPlotWidget
 from filterDesignBackend import Backend
 from libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -88,7 +89,7 @@ class Ui_FilterDesigner(object):
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setObjectName("label")
         self.verticalLayout_5.addWidget(self.label)
-        self.mousePad = PlotWidget(self.mousePadGroupBox)
+        self.mousePad = CustomPlotWidget(self.mousePadGroupBox)
         self.mousePad.setMinimumSize(QtCore.QSize(0, 0))
         self.mousePad.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.mousePad.setObjectName("mousePad")
