@@ -36,7 +36,7 @@ class Backend:
             lambda checked: self.pause_play_action(checked)
         )
         self.ui.addConjugatesCheckBox.stateChanged.connect(
-            lambda state: self.handle_conjugates()
+            lambda: self.handle_conjugates()
         )
         self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: self.handle_unit_circle_click(event)
@@ -45,7 +45,9 @@ class Backend:
             lambda event: self.create_context_menu(event)
         )
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
-        self.ui.generateSignal.clicked.connect(self.start_generating)
+        self.ui.generateSignal.toggled.connect(
+            lambda checked: self.start_generating(checked)
+        )
 
         # To control poles and zeros creation
         self.is_pole = False
@@ -84,7 +86,6 @@ class Backend:
         )
         self.filtered_data = self.original_data
         # For Mouse Signal Generation
-        self.y_points = []
         self.mouse_signal_frequencies = []
         # All-Pass Library
         self.user_inputs_values = []
@@ -414,7 +415,7 @@ class Backend:
             self.user_inputs_values.append(value)
 
             # Plot the phase response of the all-pass filter
-            plot_image_path = self.plot_all_pass_filter(value)
+            plot_image_path = self.plot_all_pass_single_filter(value)
 
             # Instantiate a library button
             button_number = str(self.idx)
@@ -441,7 +442,7 @@ class Backend:
             # Increment the index in case the user adds another custom filter
             self.idx += 1
 
-    def plot_all_pass_filter(self, value):
+    def plot_all_pass_single_filter(self, value):
         a_complex = complex(value)
         all_pass_zeros = []
         all_pass_poles = []
@@ -471,13 +472,21 @@ class Backend:
         return save_path
 
     # GENERATE SIGNAL BY MOUSE MOVEMENT
-    def start_generating(self):
-        self.real_time_timer.stop()
-        self.ui.originalApplicationSignal.clear()
-        self.ui.filteredSignal.clear()
-        self.ui.mousePad.frequencySignal.connect(self.capture_mouse_signal)
+    def start_generating(self, checked):
+        if checked:
+            self.real_time_timer.stop()
+            self.ui.originalApplicationSignal.clear()
+            self.ui.filteredSignal.clear()
+            self.original_data = []
+            self.filtered_data = []
+            self.ui.mousePad.frequencySignal.connect(self.capture_mouse_signal)
+        else:
+            self.ui.mousePad.frequencySignal.disconnect(self.capture_mouse_signal)
 
     def capture_mouse_signal(self, frequency, y):
-        self.y_points.append(y)
+        self.original_data.append(y)
+        self.filtered_data = self.original_data
         self.mouse_signal_frequencies.append(frequency)
-        print(f"Frequency: {frequency}, Y: {y}")
+
+        # Update the real-time plots
+        self.update_real_time_plots()

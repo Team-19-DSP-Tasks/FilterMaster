@@ -102,6 +102,7 @@ class Ui_FilterDesigner(object):
         self.horizontalLayout_6.addItem(spacerItem)
         self.generateSignal = QtWidgets.QPushButton(self.mousePadGroupBox)
         self.generateSignal.setObjectName("generateSignal")
+        self.generateSignal.setCheckable(True)
         self.horizontalLayout_6.addWidget(self.generateSignal)
         spacerItem1 = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
