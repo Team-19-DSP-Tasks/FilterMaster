@@ -14,6 +14,8 @@ from customPlotWidget_Mouse import CustomPlotWidget
 from filterDesignBackend import Backend
 from libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import QRegExp
+from PyQt5.QtGui import QValidator
 from pyqtgraph import PlotWidget
 
 import icons as icons
@@ -185,14 +187,23 @@ class Ui_FilterDesigner(object):
         self.inputALabel.setObjectName("inputALabel")
         self.horizontalLayout.addWidget(self.inputALabel)
         self.allPassEnteredValue = QtWidgets.QLineEdit(self.allPassDesignGroupBox)
+        self.allPassEnteredValue.setPlaceholderText("Enter a value")
+        self.validator = CustomValidator()
+        self.allPassEnteredValue.setValidator(self.validator)
         self.allPassEnteredValue.setObjectName("textField")
         self.horizontalLayout.addWidget(self.allPassEnteredValue)
         self.verticalLayout_4.addLayout(self.horizontalLayout)
         self.addAllPassFilter = QtWidgets.QPushButton(self.allPassDesignGroupBox)
         self.addAllPassFilter.setObjectName("pushButton")
+
+        self.value_error = QtWidgets.QLabel()
+        self.verticalLayout_4.addWidget(self.value_error)
+        self.value_error.setVisible(False)
+
         self.verticalLayout_4.addWidget(self.addAllPassFilter)
         self.verticalLayout_8.addWidget(self.allPassDesignGroupBox)
         # self.dockWidgetContents_3
+
         self.allPassPhaseResponse = PlotWidget(self.dockWidgetContents_3)
         self.allPassPhaseResponse.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.allPassPhaseResponse.setObjectName("allPassPhaseResponse")
@@ -561,6 +572,22 @@ class Ui_FilterDesigner(object):
             dock.close()
         else:
             dock.show()
+
+
+class CustomValidator(QValidator):
+    def __init__(self, parent=None):
+        super(CustomValidator, self).__init__(parent)
+        self.regex = QRegExp("[0-9j+-.]+")
+
+    def validate(self, input_str, pos):
+        if pos == 0 and input_str == "":
+            # Allow deleting the first character
+            return QValidator.Acceptable, input_str, pos
+
+        if self.regex.exactMatch(input_str):
+            return QValidator.Acceptable, input_str, pos
+        else:
+            return QValidator.Invalid, input_str, pos
 
 
 if __name__ == "__main__":

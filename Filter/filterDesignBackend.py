@@ -300,6 +300,21 @@ class Backend:
             self.poles_conjugates.clear()
             self.zeros_conjugates.clear()
 
+    # EXPORT THE DESIGNED FILTER
+    def export_filter(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            with open(fileName, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow([None, "x", "y"])  # Write the column titles
+                for zero in self.zeros_positions:
+                    writer.writerow(["zero", zero.x(), zero.y()])
+                writer.writerow([])
+                for pole in self.poles_positions:
+                    writer.writerow(["pole", pole.x(), pole.y()])
+
     # PLOT MAGNITUDE AND PHASE RESPONSES
     def update_responses(self):
         # Get poles and zeros positions
@@ -355,27 +370,6 @@ class Backend:
             except Exception as e:
                 print(f"Error loading the file: {e}")
 
-    def export(self):
-        fileName, _ = QFileDialog.getSaveFileName(
-            None, "Save File", "", "CSV Files (*.csv)"
-        )
-        if fileName:
-            np.savetxt(fileName, self.filtered_data, delimiter=",")
-
-    def export_filter(self):
-        fileName, _ = QFileDialog.getSaveFileName(
-            None, "Save File", "", "CSV Files (*.csv)"
-        )
-        if fileName:
-            with open(fileName, "w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow([None, "x", "y"])  # Write the column titles
-                for zero in self.zeros_positions:
-                    writer.writerow(["zero", zero.x(), zero.y()])
-                writer.writerow([])
-                for pole in self.poles_positions:
-                    writer.writerow(["pole", pole.x(), pole.y()])
-
     def update_real_time_plots(self):
         self.update_plot(self.ui.originalApplicationSignal, self.original_data)
         self.update_plot(self.ui.filteredSignal, self.filtered_data)
@@ -405,6 +399,8 @@ class Backend:
     def update_speed(self):
         points_value = self.ui.speed_slider.value()
         self.ui.speed_label.setText(f"Points: {points_value}")
+        # self.update_interval = max(1, 60 - points_value)
+        # self.plotting_timer.setInterval(self.update_interval)
 
     def pause_play_action(self, checked):
         if checked:
@@ -422,6 +418,13 @@ class Backend:
         self.plotting_timer.start(self.update_interval)
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
+
+    def export(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            np.savetxt(fileName, self.filtered_data, delimiter=",")
 
     # ORGANIZING ALL-PASS lIBRARY
     def organize_library(self, scrollAreaLayout, filtersList):
@@ -448,8 +451,7 @@ class Backend:
         # Get the value entered in the text field
         value = self.ui.allPassEnteredValue.text()
 
-        # Check first if the filter doesn't already exist to avoid redundancy of same filter
-        if value not in self.user_inputs_values:
+        if not self.validate_a_value():
             self.user_inputs_values.append(value)
 
             # Plot the phase response of the all-pass filter
@@ -480,6 +482,37 @@ class Backend:
             # Increment the index in case the user adds another custom filter
             self.idx += 1
 
+    def validate_a_value(self):
+        value = self.ui.allPassEnteredValue.text()
+
+        if value in self.user_inputs_values:
+            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid red;")
+            self.show_error(self.ui.value_error, "Filter already exists")
+            return True
+        elif value == "1":
+            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid red;")
+            self.show_error(self.ui.value_error, "'a' can't be 1")
+            return True
+        else:
+            for filter in self.all_pass_filters:
+                if complex(value) == complex(filter.allPassValue):
+                    self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid red;")
+                    self.show_error(self.ui.value_error, "Filter already exists")
+                    return True
+
+        # If no duplicate is found, clear the error message and reset the border
+        self.ui.allPassEnteredValue.setStyleSheet("")
+        self.hide_error(self.ui.value_error)
+        return False
+
+    def show_error(self, error_label, message):
+        error_label.setText(f'<font color="red">{message}</font>')
+        error_label.setVisible(True)
+
+    def hide_error(self, error_label):
+        error_label.clear()
+        error_label.setVisible(False)
+
     def plot_all_pass_single_filter(self, value):
         a_complex = complex(value)
         all_pass_zeros = []
@@ -498,7 +531,7 @@ class Backend:
         plt.figure()
         plt.plot(
             all_pass_frequencies_values,
-            np.angle(all_pass_response_complex),
+            np.unwrap(np.angle(all_pass_response_complex)),
             color="orange",
             linewidth=5,
         )

@@ -26,7 +26,7 @@ for idx, a_value in enumerate(a_values):
 
     # Plot the phase response
     plt.figure()
-    plt.plot(w, np.angle(h), color="orange", linewidth=5)
+    plt.plot(w, np.unwrap(np.angle(h)), color="orange", linewidth=5)
     plt.axis("off")
     # Save the plot as a PNG file
     save_path = os.path.join(save_directory, f"phase_response_{idx}.png")
