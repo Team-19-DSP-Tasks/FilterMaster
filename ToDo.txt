@@ -1,0 +1,14 @@
+1- Best practices: dictionaries
+3- Import filter by drag and drop
+4- Mouse
+5- All pass fine tune
+6- Repetition
+7- UI
+8- points slider
+11- lengthy data
+12- prepare filters
+13- 3D visualisation
+14- By default, the user can plot zeros ->
+	add a default mode and that means you may want to consider
+	converting addPole and addZero to checkable buttons
+16- Save application

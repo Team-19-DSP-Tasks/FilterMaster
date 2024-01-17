@@ -1,4 +1,4 @@
-import logging
+import csv
 import os
 
 import matplotlib.pyplot as plt
@@ -26,12 +26,17 @@ class Backend:
         # UI Objects Connections
         self.ui.addPole.clicked.connect(lambda: self.pole_mode())
         self.ui.addZero.clicked.connect(lambda: self.zero_mode())
+
         self.ui.removeAllPoles.clicked.connect(lambda: self.remove_poles())
         self.ui.removeAllZeros.clicked.connect(lambda: self.remove_zeros())
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
+        self.ui.actionImport_Signal.triggered.connect(self.import_signal)
+        self.ui.exportSignal.clicked.connect(lambda: self.export())
+        self.ui.exportFilter.clicked.connect(lambda: self.export_filter())
+        self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
         self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
-        self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
+
         self.ui.pause_play_button.toggled.connect(
             lambda checked: self.pause_play_action(checked)
         )
@@ -41,10 +46,6 @@ class Backend:
         self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: self.handle_unit_circle_click(event)
         )
-        self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
-            lambda event: self.create_context_menu(event)
-        )
-        self.ui.actionImport_Signal.triggered.connect(self.import_signal)
         self.ui.generateSignal.toggled.connect(
             lambda checked: self.start_generating(checked)
         )
@@ -62,25 +63,24 @@ class Backend:
         self.zeros_positions = []
         self.poles_conjugates_positions = []
         self.zeros_conjugates_positions = []
-        # Remove a specific zero or pole
-        self.clicked_position = None
-        # For Filter Calculations
+        # For Z-Plane Filter Calculations
         self.zeros_array = None
         self.poles_array = None
         self.numerator = None
         self.denominator = None
-        # For plotting magnitude and phase responses
+        # For plotting magnitude and phase responses of Z-Plane Filter
         self.mag_curve = pg.PlotCurveItem(pen="b")
         self.phase_curve = pg.PlotCurveItem(pen="r")
         # Add PlotCurveItem to magnitude and phase response plots
         self.ui.magFrequencyResponse.addItem(self.mag_curve)
         self.ui.phaseFrequencyResponse.addItem(self.phase_curve)
-        # Global Variables for real time plotting
+        # Variables for real time plotting
         self.update_interval = 50
-        self.real_time_timer = QTimer()
-        self.real_time_timer.timeout.connect(self.update_real_time_plots)
-        self.real_time_timer.start(self.update_interval)
+        self.plotting_timer = QTimer()
+        self.plotting_timer.timeout.connect(self.update_real_time_plots)
+        self.plotting_timer.start(self.update_interval)
         self.signal_index = 0
+        # Data storing variables to be plotted: initially defined
         self.original_data = np.loadtxt(
             "signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
@@ -90,7 +90,7 @@ class Backend:
         # All-Pass Library
         self.user_inputs_values = []
         self.idx = 9  # to accurately name the plot response of all-pass filter
-        self.cascaded_filters = []
+        self.cascaded_filters = []  # includes the chosen filters to be cascaded
         self.all_pass_filters = [
             self.ui.allPass00,
             self.ui.allPass01,
@@ -101,16 +101,20 @@ class Backend:
             self.ui.allPass06,
             self.ui.allPass07,
             self.ui.allPass08,
-        ]
+        ]  # These are the predefined all-pass filters in the application
 
-        for btn in self.all_pass_filters:
-            btn.toggled.connect(
-                lambda checked, button=btn: self.on_filter_chosen(checked, button)
+        for filter in self.all_pass_filters:
+            filter.toggled.connect(
+                lambda checked, button=filter: self.on_filter_chosen(checked, button)
             )
-        # Set the initial state for the buttons
+        # Set the initial state for the library appearance
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
 
-    # CREATING Zeros and Poles
+    # =============================================================================================== #
+    # =========================================== Methods =========================================== #
+    # =============================================================================================== #
+
+    # CREATING ZEROS AND POLES
     def pole_mode(self):
         self.is_pole = True
         self.is_zero = False
@@ -118,24 +122,6 @@ class Backend:
     def zero_mode(self):
         self.is_pole = False
         self.is_zero = True
-
-    def draw_item(self, pos, symbol, color, items, positions_list, conjugates_list):
-        item = TargetItem(
-            pos=pos,
-            size=10,
-            movable=True,
-            symbol=symbol,
-            pen=pg.mkPen(color),
-        )
-        self.ui.unitCirclePlot.addItem(item)
-        items.append(item)
-        positions_list.append(pos)
-        conjugates_list.append(pg.Point(pos.x(), -pos.y()))
-        index = positions_list.index(pos)
-        # Connect the sigPositionChanged signal to the update_positions function
-        item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
-        # Only call plot_responses once after all initial items are drawn
-        self.update_responses()
 
     def handle_unit_circle_click(self, event):
         pos = self.ui.unitCirclePlot.mapToView(event.scenePos())
@@ -159,14 +145,36 @@ class Backend:
                     self.zeros_conjugates_positions,
                 )
 
-        elif event.button() == QtCore.Qt.RightButton:
-            self.clicked_position = pos
+            if self.ui.addConjugatesCheckBox.isChecked():
+                if self.is_pole:
+                    self.draw_conjugates(
+                        [self.poles_conjugates_positions[-1]], "x", "b"
+                    )
+                elif self.is_zero:
+                    self.draw_conjugates(
+                        [self.zeros_conjugates_positions[-1]], "o", "y"
+                    )
 
-        if self.ui.addConjugatesCheckBox.isChecked():
-            if self.is_pole:
-                self.draw_conjugates([self.poles_conjugates_positions[-1]], "x", "b")
-            elif self.is_zero:
-                self.draw_conjugates([self.zeros_conjugates_positions[-1]], "o", "y")
+        elif event.button() == QtCore.Qt.RightButton:
+            self.create_context_menu(pos)
+
+    def draw_item(self, pos, symbol, color, items, positions_list, conjugates_list):
+        item = TargetItem(
+            pos=pos,
+            size=10,
+            movable=True,
+            symbol=symbol,
+            pen=pg.mkPen(color),
+        )
+        self.ui.unitCirclePlot.addItem(item)
+        items.append(item)
+        positions_list.append(pos)
+        conjugates_list.append(pg.Point(pos.x(), -pos.y()))
+        index = positions_list.index(pos)
+        # Connect the sigPositionChanged signal to the update_positions function
+        item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
+        # Update the magnitude and phase plotting if items are being moved
+        self.update_responses()
 
     def update_positions(self, item, index):
         new_pos = item.pos()
@@ -186,42 +194,49 @@ class Backend:
                 )
         self.update_responses()
 
-    # Remove a specific zero or pole
-    def create_context_menu(self, event):
-        if self.clicked_position is None:
-            pass
-        else:
-            # Context Menu to delete a specific zero or pole
-            self.context_menu = QMenu()
-            self.remove_action = QAction("Remove")
-            # Connect the signal before executing the context menu
-            self.remove_action.triggered.connect(lambda: self.remove_item())
-            self.context_menu.addAction(self.remove_action)
-            self.context_menu.exec_(QtGui.QCursor.pos())
+    # REMOVE A SPECIFIC ZERO OR POLE
+    def create_context_menu(self, clicked_position):
+        # Context Menu to delete a specific zero or pole
+        self.context_menu = QMenu()
+        self.remove_action = QAction("Remove")
+        # Connect the signal before executing the context menu
+        self.remove_action.triggered.connect(lambda: self.remove_item(clicked_position))
+        self.context_menu.addAction(self.remove_action)
+        self.context_menu.exec_(QtGui.QCursor.pos())
 
-    def remove_item(self):
+    def remove_item(self, clicked_position):
         tolerance = 0.1
         for pole_pos in self.poles_positions:
-            if (pole_pos - self.clicked_position).manhattanLength() < tolerance:
+            if (pole_pos - clicked_position).manhattanLength() < tolerance:
                 index = self.poles_positions.index(pole_pos)
                 item = self.poles[index]
                 self.ui.unitCirclePlot.removeItem(item)
                 self.poles.remove(item)
                 self.poles_positions.remove(pole_pos)
-                self.clicked_position = None
+                self.poles_conjugates_positions.remove(
+                    self.poles_conjugates_positions[index]
+                )
+                if self.ui.addConjugatesCheckBox.isChecked():
+                    self.ui.unitCirclePlot.removeItem(self.poles_conjugates[index])
+                    self.poles_conjugates.remove(self.poles_conjugates[index])
 
         for zero_pos in self.zeros_positions:
-            if (zero_pos - self.clicked_position).manhattanLength() < tolerance:
+            if (zero_pos - clicked_position).manhattanLength() < tolerance:
                 index = self.zeros_positions.index(zero_pos)
                 item = self.zeros[index]
                 self.ui.unitCirclePlot.removeItem(item)
                 self.zeros.remove(item)
                 self.zeros_positions.remove(zero_pos)
-                self.clicked_position = None
+                self.zeros_conjugates_positions.remove(
+                    self.zeros_conjugates_positions[index]
+                )
+                if self.ui.addConjugatesCheckBox.isChecked():
+                    self.ui.unitCirclePlot.removeItem(self.zeros_conjugates[index])
+                    self.zeros_conjugates.remove(self.zeros_conjugates[index])
 
         self.update_responses()
 
-    # REMOVE All Zeros/Poles and RESET Design
+    # REMOVE All ZEROS/POLES AND RESET DESIGN
     def remove_poles(self):
         self.remove(self.poles + self.poles_conjugates)
         # Empty all pole related lists
@@ -336,9 +351,30 @@ class Backend:
                 # Reset the signal index when a new signal is imported
                 self.signal_index = 0
                 self.update_plot()  # Use the new signal data for real-time plotting
-                self.real_time_timer.start(self.update_interval)
+                self.plotting_timer.start(self.update_interval)
             except Exception as e:
                 print(f"Error loading the file: {e}")
+
+    def export(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            np.savetxt(fileName, self.filtered_data, delimiter=",")
+
+    def export_filter(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            with open(fileName, "w", newline="") as file:
+                writer = csv.writer(file)
+                writer.writerow([None, "x", "y"])  # Write the column titles
+                for zero in self.zeros_positions:
+                    writer.writerow(["zero", zero.x(), zero.y()])
+                writer.writerow([])
+                for pole in self.poles_positions:
+                    writer.writerow(["pole", pole.x(), pole.y()])
 
     def update_real_time_plots(self):
         self.update_plot(self.ui.originalApplicationSignal, self.original_data)
@@ -372,10 +408,10 @@ class Backend:
 
     def pause_play_action(self, checked):
         if checked:
-            self.real_time_timer.stop()
+            self.plotting_timer.stop()
             self.ui.pause_play_button.setIcon(QtGui.QIcon("Icons/play_button.png"))
         else:
-            self.real_time_timer.start(self.update_interval)
+            self.plotting_timer.start(self.update_interval)
             self.ui.pause_play_button.setIcon(QtGui.QIcon("Icons/pause_button.png"))
 
     def apply_filter(self):
@@ -383,7 +419,7 @@ class Backend:
             self.numerator, self.denominator, self.original_data
         ).real
         self.signal_index = 0
-        self.real_time_timer.start(self.update_interval)
+        self.plotting_timer.start(self.update_interval)
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
 
@@ -476,7 +512,7 @@ class Backend:
     # GENERATE SIGNAL BY MOUSE MOVEMENT
     def start_generating(self, checked):
         if checked:
-            self.real_time_timer.stop()
+            self.plotting_timer.stop()
             self.ui.originalApplicationSignal.clear()
             self.ui.filteredSignal.clear()
             self.original_data = []
