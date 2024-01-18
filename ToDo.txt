@@ -1,14 +1,35 @@
-1- Best practices: dictionaries
-3- Import filter by drag and drop
-4- Mouse
-5- All pass fine tune
-6- Repetition
-7- UI
-8- points slider
-11- lengthy data
-12- prepare filters
-13- 3D visualisation
-14- By default, the user can plot zeros ->
+PRIORITY:
+=========
+1. Mouse
+2. All pass fine tune
+3. Repetition
+4. Points slider/plotting
+5. By default, the user can plot zeros ->
 	add a default mode and that means you may want to consider
 	converting addPole and addZero to checkable buttons
-16- Save application
+
+
+DONE:
+=====
+1. Export filters and filtered data
+2. Removing single zero or pole
+3. Corner case: export filter: error: design is empty
+
+
+EXTRA:
+======
+1. Best practices: dictionaries
+2. Import filter by drag and drop
+3. UI revise colors and whole design
+4. 3D visualisation
+5. Save application
+6. Corner case: all pass filter exists in library but was moved to the cascaded, didn't check
+8. Corner case: showing and hiding the dockwidgets
+9. Import filter by drag and drop
+10. Add conjugate to a single specific zero or pole
+
+
+NOT CONSIDERED WORK:
+====================
+1. Lengthy data
+2. Prepare filters for Discussion

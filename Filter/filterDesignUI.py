@@ -9,6 +9,7 @@
 
 import webbrowser
 
+import icons as icons
 import pyqtgraph as pg
 from customPlotWidget_Mouse import CustomPlotWidget
 from filterDesignBackend import Backend
@@ -17,8 +18,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
 from pyqtgraph import PlotWidget
-
-import icons as icons
 
 
 class Ui_FilterDesigner(object):
@@ -195,9 +194,11 @@ class Ui_FilterDesigner(object):
         self.verticalLayout_4.addLayout(self.horizontalLayout)
         self.addAllPassFilter = QtWidgets.QPushButton(self.allPassDesignGroupBox)
         self.addAllPassFilter.setObjectName("pushButton")
+        self.addAllPassFilter.setShortcut(QtGui.QKeySequence(QtCore.Qt.Key_Enter))
 
         self.value_error = QtWidgets.QLabel()
         self.verticalLayout_4.addWidget(self.value_error)
+        self.value_error.setStyleSheet("letter-spacing: 3px;")
         self.value_error.setVisible(False)
 
         self.verticalLayout_4.addWidget(self.addAllPassFilter)
@@ -211,9 +212,9 @@ class Ui_FilterDesigner(object):
         self.allPassPhaseResponse.setLabel("bottom", "Frequency [rad/sample]")
         self.allPassPhaseResponse.setLabel("left", "Phase [radians]")
         self.verticalLayout_8.addWidget(self.allPassPhaseResponse)
-        self.applyFilterButton_2 = QtWidgets.QPushButton(self.dockWidgetContents_3)
-        self.applyFilterButton_2.setObjectName("applyFilterButton_2")
-        self.verticalLayout_8.addWidget(self.applyFilterButton_2)
+        self.applyAllPassFilter = QtWidgets.QPushButton(self.dockWidgetContents_3)
+        self.applyAllPassFilter.setObjectName("applyFilterButton_2")
+        self.verticalLayout_8.addWidget(self.applyAllPassFilter)
         self.allPassLibrary.setWidget(self.dockWidgetContents_3)
         FilterDesigner.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.allPassLibrary)
         self.dockWidget_3 = QtWidgets.QDockWidget(FilterDesigner)
@@ -339,6 +340,10 @@ class Ui_FilterDesigner(object):
         self.exportFilter.setObjectName("export_filter")
         self.z_plane_VerticalLayout.addLayout(self.horizontalLayout_2)
         self.z_plane_VerticalLayout.addWidget(self.exportFilter)
+        self.emptyDesign = QtWidgets.QLabel()
+        self.emptyDesign.setStyleSheet("letter-spacing: 3px;")
+        self.z_plane_VerticalLayout.addWidget(self.emptyDesign)
+        self.emptyDesign.setVisible(False)
         ###########################
 
         self.verticalLayout_2.addWidget(self.filterDesignGroupBox)
@@ -408,55 +413,55 @@ class Ui_FilterDesigner(object):
 
         self.allPass00 = ProcessButton(
             "a = 0.7",
-            "All-Pass-Phase-Responses\phase_response_0.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_0.png",
             0.7,
             self.scrollAreaWidgetContents,
         )
         self.allPass01 = ProcessButton(
             "a = 1+2j",
-            "All-Pass-Phase-Responses\phase_response_1.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_1.png",
             1 + 2j,
             self.scrollAreaWidgetContents,
         )
         self.allPass02 = ProcessButton(
             "a = 0.3+0.2j",
-            "All-Pass-Phase-Responses\phase_response_2.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_2.png",
             0.3 + 0.2j,
             self.scrollAreaWidgetContents,
         )
         self.allPass03 = ProcessButton(
             "a = 1.5j",
-            "All-Pass-Phase-Responses\phase_response_3.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_3.png",
             1.5j,
             self.scrollAreaWidgetContents,
         )
         self.allPass04 = ProcessButton(
             "a = 5+1j",
-            "All-Pass-Phase-Responses\phase_response_4.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_4.png",
             5 + 1j,
             self.scrollAreaWidgetContents,
         )
         self.allPass05 = ProcessButton(
             "a = -0.9",
-            "All-Pass-Phase-Responses\phase_response_5.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_5.png",
             -0.9,
             self.scrollAreaWidgetContents,
         )
         self.allPass06 = ProcessButton(
             "a = 1.2",
-            "All-Pass-Phase-Responses\phase_response_6.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_6.png",
             1.2,
             self.scrollAreaWidgetContents,
         )
         self.allPass07 = ProcessButton(
             "a = 3",
-            "All-Pass-Phase-Responses\phase_response_7.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_7.png",
             3,
             self.scrollAreaWidgetContents,
         )
         self.allPass08 = ProcessButton(
             "a = 0.2",
-            "All-Pass-Phase-Responses\phase_response_8.png",
+            "Resources\All-Pass-Phase-Responses\phase_response_8.png",
             0.2,
             self.scrollAreaWidgetContents,
         )
@@ -468,7 +473,7 @@ class Ui_FilterDesigner(object):
         self.pause_play_button = QtWidgets.QPushButton()
         self.pause_play_button.setCheckable(True)
         self.pause_play_button.setObjectName("pause_play_button")
-        self.pause_play_button.setIcon(QtGui.QIcon("Icons/pause_button.png"))
+        self.pause_play_button.setIcon(QtGui.QIcon("Resources/Icons/pause_button.png"))
         spacerItem4 = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
@@ -539,7 +544,7 @@ class Ui_FilterDesigner(object):
         self.addAllPassFilter.setText(
             _translate("FilterDesigner", "Add custom all-pass filter")
         )
-        self.applyFilterButton_2.setText(
+        self.applyAllPassFilter.setText(
             _translate("FilterDesigner", "Apply All-Pass Filter")
         )
         self.dockWidget_3.setWindowTitle(

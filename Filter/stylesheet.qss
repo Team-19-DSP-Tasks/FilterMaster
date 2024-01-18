@@ -267,13 +267,13 @@ QScrollBar::down-arrow:vertical
 {       
       width: 10px;
       height: 10px;
-      image: url(Icons/down-arrow.png);
+      image: url(Resources/Icons/down-arrow.png);
 }
 QScrollBar::up-arrow:vertical
 {
       width: 10px;
       height: 10px;
-      image: url(Icons/up-arrow.png);
+      image: url(Resources/Icons/up-arrow.png);
 }
 
 
@@ -307,8 +307,8 @@ color: #414141;
 
 QDockWidget {
     border: 1px solid lightgray;
-    titlebar-close-icon: url(Icons/close.png);
-    titlebar-normal-icon: url(Icons/restore.png);
+    titlebar-close-icon: url(Resources/Icons/close.png);
+    titlebar-normal-icon: url(Resources/Icons/restore.png);
 }
 
 QDockWidget::title {
@@ -497,7 +497,7 @@ QRadioButton::indicator:hover, QCheckBox::indicator:hover
 
 QCheckBox::indicator:checked
 {
-    image:url(Icons/checkmark.png);
+    image:url(Resources/Icons/checkmark.png);
 }
 
 QCheckBox::indicator:disabled, QRadioButton::indicator:disabled

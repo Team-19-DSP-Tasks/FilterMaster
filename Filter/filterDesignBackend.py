@@ -15,7 +15,7 @@ from scipy import signal
 from scipy.signal import freqz, zpk2tf
 
 # A folder to store the phase response plots of all-pass filters
-save_directory = "All-Pass-Phase-Responses"
+save_directory = "Resources/All-Pass-Phase-Responses"
 os.makedirs(save_directory, exist_ok=True)
 
 
@@ -35,8 +35,13 @@ class Backend:
         self.ui.exportFilter.clicked.connect(lambda: self.export_filter())
         self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
+        self.ui.applyAllPassFilter.clicked.connect(
+            lambda: self.plot_all_pass_zeros_and_poles()
+        )
         self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
-
+        self.ui.allPassEnteredValue.editingFinished.connect(
+            lambda: self.add_all_pass_filter()
+        )
         self.ui.pause_play_button.toggled.connect(
             lambda checked: self.pause_play_action(checked)
         )
@@ -68,6 +73,11 @@ class Backend:
         self.poles_array = None
         self.numerator = None
         self.denominator = None
+        # For All-Pass zeros and poles plotting
+        self.all_pass_zeros = []
+        self.all_pass_poles = []
+        self.all_pass_zeros_positions = []
+        self.all_pass_poles_positions = []
         # For plotting magnitude and phase responses of Z-Plane Filter
         self.mag_curve = pg.PlotCurveItem(pen="b")
         self.phase_curve = pg.PlotCurveItem(pen="r")
@@ -82,7 +92,7 @@ class Backend:
         self.signal_index = 0
         # Data storing variables to be plotted: initially defined
         self.original_data = np.loadtxt(
-            "signals/leadII_ecg_fibrillation.csv", delimiter=","
+            "Resources/signals/leadII_ecg_fibrillation.csv", delimiter=","
         )
         self.filtered_data = self.original_data
         # For Mouse Signal Generation
@@ -107,6 +117,7 @@ class Backend:
             filter.toggled.connect(
                 lambda checked, button=filter: self.on_filter_chosen(checked, button)
             )
+
         # Set the initial state for the library appearance
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
 
@@ -302,18 +313,22 @@ class Backend:
 
     # EXPORT THE DESIGNED FILTER
     def export_filter(self):
-        fileName, _ = QFileDialog.getSaveFileName(
-            None, "Save File", "", "CSV Files (*.csv)"
-        )
-        if fileName:
-            with open(fileName, "w", newline="") as file:
-                writer = csv.writer(file)
-                writer.writerow([None, "x", "y"])  # Write the column titles
-                for zero in self.zeros_positions:
-                    writer.writerow(["zero", zero.x(), zero.y()])
-                writer.writerow([])
-                for pole in self.poles_positions:
-                    writer.writerow(["pole", pole.x(), pole.y()])
+        if len(self.poles) == 0 and len(self.zeros) == 0:
+            self.show_error(self.ui.emptyDesign, "Design is empty!")
+        else:
+            self.hide_error(self.ui.emptyDesign)
+            fileName, _ = QFileDialog.getSaveFileName(
+                None, "Save File", "", "CSV Files (*.csv)"
+            )
+            if fileName:
+                with open(fileName, "w", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow([None, "x", "y"])  # Write the column titles
+                    for zero in self.zeros_positions:
+                        writer.writerow(["zero", zero.x(), zero.y()])
+                    writer.writerow([])
+                    for pole in self.poles_positions:
+                        writer.writerow(["pole", pole.x(), pole.y()])
 
     # PLOT MAGNITUDE AND PHASE RESPONSES
     def update_responses(self):
@@ -405,12 +420,19 @@ class Backend:
     def pause_play_action(self, checked):
         if checked:
             self.plotting_timer.stop()
-            self.ui.pause_play_button.setIcon(QtGui.QIcon("Icons/play_button.png"))
+            self.ui.pause_play_button.setIcon(
+                QtGui.QIcon("Resources/Icons/play_button.png")
+            )
         else:
             self.plotting_timer.start(self.update_interval)
-            self.ui.pause_play_button.setIcon(QtGui.QIcon("Icons/pause_button.png"))
+            self.ui.pause_play_button.setIcon(
+                QtGui.QIcon("Resources/Icons/pause_button.png")
+            )
 
     def apply_filter(self):
+        if len(self.poles) == 0 and len(self.zeros) == 0:
+            self.show_error(self.ui.emptyDesign, "Design is empty!")
+            return
         self.filtered_data = signal.lfilter(
             self.numerator, self.denominator, self.original_data
         ).real
@@ -486,17 +508,23 @@ class Backend:
         value = self.ui.allPassEnteredValue.text()
 
         if value in self.user_inputs_values:
-            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid red;")
-            self.show_error(self.ui.value_error, "Filter already exists")
+            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
+            self.show_error(self.ui.value_error, "Filter was already added")
+            return True
+        elif value == "":
+            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
+            self.show_error(self.ui.value_error, "Enter a value")
             return True
         elif value == "1":
-            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid red;")
+            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
             self.show_error(self.ui.value_error, "'a' can't be 1")
             return True
         else:
             for filter in self.all_pass_filters:
                 if complex(value) == complex(filter.allPassValue):
-                    self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid red;")
+                    self.ui.allPassEnteredValue.setStyleSheet(
+                        "border: 1px solid #ef0f2e;"
+                    )
                     self.show_error(self.ui.value_error, "Filter already exists")
                     return True
 
@@ -506,7 +534,7 @@ class Backend:
         return False
 
     def show_error(self, error_label, message):
-        error_label.setText(f'<font color="red">{message}</font>')
+        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
         error_label.setVisible(True)
 
     def hide_error(self, error_label):
@@ -515,17 +543,22 @@ class Backend:
 
     def plot_all_pass_single_filter(self, value):
         a_complex = complex(value)
-        all_pass_zeros = []
-        all_pass_poles = []
-        all_pass_poles.append(a_complex)
+
+        pole = a_complex
+        self.all_pass_poles.append(pole)
         zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
-        all_pass_zeros.append(zero)
+        self.all_pass_zeros.append(zero)
 
         # Calculate frequency response using freqz
-        numerator, denominator = signal.zpk2tf(all_pass_zeros, all_pass_poles, 1)
+        numerator, denominator = signal.zpk2tf(
+            self.all_pass_zeros, self.all_pass_poles, 1
+        )
         all_pass_frequencies_values, all_pass_response_complex = signal.freqz(
             numerator, denominator, worN=8000
         )
+
+        self.all_pass_zeros_positions.append((zero.real, zero.imag))
+        self.all_pass_poles_positions.append((pole.real, pole.imag))
 
         # Plot the phase response
         plt.figure()
@@ -541,6 +574,20 @@ class Backend:
         plt.savefig(save_path, transparent=True)
         plt.clf()
         return save_path
+
+    def plot_all_pass_zeros_and_poles(self):
+        # Iterate over the zeros positions and plot them
+        for zero_position in self.all_pass_zeros_positions:
+            item = pg.ScatterPlotItem(
+                [zero_position[0]], [zero_position[1]], marker="o", color="g"
+            )
+            self.ui.unitCirclePlot.addItem(item)
+        # Iterate over the poles positions and plot them
+        for pole_position in self.all_pass_poles_positions:
+            item = pg.ScatterPlotItem(
+                [pole_position[0]], [pole_position[1]], marker="o", color="g"
+            )
+            self.ui.unitCirclePlot.addItem(item)
 
     # GENERATE SIGNAL BY MOUSE MOVEMENT
     def start_generating(self, checked):
