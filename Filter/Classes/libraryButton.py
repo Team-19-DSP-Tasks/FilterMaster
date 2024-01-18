@@ -1,17 +1,6 @@
-import sys
-
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtWidgets import (
-    QApplication,
-    QGraphicsProxyWidget,
-    QGraphicsScene,
-    QGraphicsView,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QVBoxLayout,
-)
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtWidgets import QLabel, QPushButton, QVBoxLayout
 
 
 class ProcessButton(QPushButton):
@@ -19,6 +8,8 @@ class ProcessButton(QPushButton):
         super(ProcessButton, self).__init__(parent)
 
         self.allPassValue = allPassValue
+        self.image_path = image_path
+        self.name = name
 
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
@@ -34,3 +25,7 @@ class ProcessButton(QPushButton):
 
         self.setFixedSize(100, 100)
         self.setCheckable(True)
+
+    def clone(self):
+        # Create a new instance with the same attributes
+        return ProcessButton(self.name, self.image_path, self.allPassValue)

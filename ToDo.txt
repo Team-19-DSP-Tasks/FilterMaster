@@ -1,12 +1,23 @@
 PRIORITY:
 =========
 1. Mouse
-2. All pass fine tune
+2. All pass fine tune ->
+	-	Filters should not be removed from library
+	-	Upon "choosing" any filter, its zero and pole
+		should be plotted in the z-plane
+	-	Upon "adding" any filter, its zero and pole
+		should be plotted in the z-plane
+	-	Plot each filter's phase response [not sure]
+	-	Toggle to see the cascaded filter phase response [not sure]
+	-	change the z-plane phase response: correct phase on applying or on adding and choosing [not sure]
+	-	corner case: if the user removed chosen filter,
+		its pole and zero get removed and its effect on cascading removed
+		
 3. Repetition
 4. Points slider/plotting
 5. By default, the user can plot zeros ->
-	add a default mode and that means you may want to consider
-	converting addPole and addZero to checkable buttons
+	-	add a default mode and that means you may want to consider
+		converting addPole and addZero to checkable buttons
 
 
 DONE:
@@ -23,7 +34,7 @@ EXTRA:
 3. UI revise colors and whole design
 4. 3D visualisation
 5. Save application
-6. Corner case: all pass filter exists in library but was moved to the cascaded, didn't check
+6. Corner case: all pass filter exists in library but was moved to the cascaded, didn't check || Change the whole library
 8. Corner case: showing and hiding the dockwidgets
 9. Import filter by drag and drop
 10. Add conjugate to a single specific zero or pole

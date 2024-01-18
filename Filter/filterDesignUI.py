@@ -11,9 +11,9 @@ import webbrowser
 
 import icons as icons
 import pyqtgraph as pg
-from customPlotWidget_Mouse import CustomPlotWidget
+from Classes.customPlotWidget_Mouse import CustomPlotWidget
+from Classes.libraryButton import ProcessButton
 from filterDesignBackend import Backend
-from libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
@@ -212,9 +212,16 @@ class Ui_FilterDesigner(object):
         self.allPassPhaseResponse.setLabel("bottom", "Frequency [rad/sample]")
         self.allPassPhaseResponse.setLabel("left", "Phase [radians]")
         self.verticalLayout_8.addWidget(self.allPassPhaseResponse)
-        self.applyAllPassFilter = QtWidgets.QPushButton(self.dockWidgetContents_3)
-        self.applyAllPassFilter.setObjectName("applyFilterButton_2")
-        self.verticalLayout_8.addWidget(self.applyAllPassFilter)
+        self.correctPhase = QtWidgets.QPushButton(self.dockWidgetContents_3)
+        self.correctPhase.setObjectName("applyFilterButton_2")
+        self.verticalLayout_8.addWidget(self.correctPhase)
+
+        ### label for error upon correcting phase
+        self.filterNotChosen = QtWidgets.QLabel()
+        self.verticalLayout_8.addWidget(self.filterNotChosen)
+        self.filterNotChosen.setStyleSheet("letter-spacing: 3px;")
+        self.filterNotChosen.setVisible(False)
+
         self.allPassLibrary.setWidget(self.dockWidgetContents_3)
         FilterDesigner.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.allPassLibrary)
         self.dockWidget_3 = QtWidgets.QDockWidget(FilterDesigner)
@@ -280,9 +287,9 @@ class Ui_FilterDesigner(object):
 
         circle_roi.removeHandle(0)
         # Set the view range
-        self.unitCirclePlot.setMouseEnabled(x=False, y=False)
-        self.unitCirclePlot.setRange(xRange=(-1, 1), yRange=(-1, 1))
-        self.unitCirclePlot.setLimits(xMin=-1.1, xMax=1.1, yMin=-1.1, yMax=1.1)
+        # self.unitCirclePlot.setMouseEnabled(x=False, y=False)
+        # self.unitCirclePlot.setRange(xRange=(-1, 1), yRange=(-1, 1))
+        # self.unitCirclePlot.setLimits(xMin=-1.1, xMax=1.1, yMin=-1.1, yMax=1.1)
 
         self.horizontalLayout_2.addWidget(self.unitCirclePlot)
 
@@ -544,9 +551,7 @@ class Ui_FilterDesigner(object):
         self.addAllPassFilter.setText(
             _translate("FilterDesigner", "Add custom all-pass filter")
         )
-        self.applyAllPassFilter.setText(
-            _translate("FilterDesigner", "Apply All-Pass Filter")
-        )
+        self.correctPhase.setText(_translate("FilterDesigner", "Correct Phase"))
         self.dockWidget_3.setWindowTitle(
             _translate("FilterDesigner", "Z-Plane Filter Design")
         )

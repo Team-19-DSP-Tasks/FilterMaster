@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import wfdb
-from libraryButton import ProcessButton
+from Classes.libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
@@ -35,7 +35,7 @@ class Backend:
         self.ui.exportFilter.clicked.connect(lambda: self.export_filter())
         self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
-        self.ui.applyAllPassFilter.clicked.connect(
+        self.ui.correctPhase.clicked.connect(
             lambda: self.plot_all_pass_zeros_and_poles()
         )
         self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
@@ -576,18 +576,30 @@ class Backend:
         return save_path
 
     def plot_all_pass_zeros_and_poles(self):
-        # Iterate over the zeros positions and plot them
-        for zero_position in self.all_pass_zeros_positions:
-            item = pg.ScatterPlotItem(
-                [zero_position[0]], [zero_position[1]], marker="o", color="g"
-            )
-            self.ui.unitCirclePlot.addItem(item)
-        # Iterate over the poles positions and plot them
-        for pole_position in self.all_pass_poles_positions:
-            item = pg.ScatterPlotItem(
-                [pole_position[0]], [pole_position[1]], marker="o", color="g"
-            )
-            self.ui.unitCirclePlot.addItem(item)
+        if len(self.cascaded_filters) == 0:
+            self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
+            return
+        else:
+            # Iterate over the zeros positions and plot them
+            for zero_position in self.all_pass_zeros_positions:
+                item = TargetItem(
+                    pos=zero_position,
+                    size=10,
+                    movable=False,
+                    symbol="o",
+                    pen=pg.mkPen("g"),
+                )
+                self.ui.unitCirclePlot.addItem(item)
+            # Iterate over the poles positions and plot them
+            for pole_position in self.all_pass_poles_positions:
+                item = TargetItem(
+                    pos=pole_position,
+                    size=10,
+                    movable=False,
+                    symbol="x",
+                    pen=pg.mkPen("r"),
+                )
+                self.ui.unitCirclePlot.addItem(item)
 
     # GENERATE SIGNAL BY MOUSE MOVEMENT
     def start_generating(self, checked):
