@@ -14,14 +14,14 @@ import pyqtgraph as pg
 from Classes.CSVlabel import CSVLabelArea
 from Classes.customPlotWidget_Mouse import CustomPlotWidget
 from Classes.libraryButton import ProcessButton
-from filterDesignBackend import Backend
-
-# from formatting import Backend
+from formatting import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
 from PyQt5.QtWidgets import QAction, QMenu
 from pyqtgraph import PlotWidget
+
+# from filterDesignBackend import Backend
 
 
 class Ui_FilterDesigner(object):
@@ -439,57 +439,48 @@ class Ui_FilterDesigner(object):
         self.menuHelp.addAction(self.actionOpen_Docs)
 
         self.allPass00 = ProcessButton(
-            "a = 0.7",
-            "Resources\All-Pass-Phase-Responses\phase_response_0.png",
             0.7,
+            1,
             self.scrollAreaWidgetContents,
         )
         self.allPass01 = ProcessButton(
-            "a = 1+2j",
-            "Resources\All-Pass-Phase-Responses\phase_response_1.png",
             1 + 2j,
+            2,
             self.scrollAreaWidgetContents,
         )
         self.allPass02 = ProcessButton(
-            "a = 0.3+0.2j",
-            "Resources\All-Pass-Phase-Responses\phase_response_2.png",
             0.3 + 0.2j,
-            self.scrollAreaWidgetContents,
-        )
-        self.allPass03 = ProcessButton(
-            "a = 1.5j",
-            "Resources\All-Pass-Phase-Responses\phase_response_3.png",
-            1.5j,
-            self.scrollAreaWidgetContents,
-        )
-        self.allPass04 = ProcessButton(
-            "a = 5+1j",
-            "Resources\All-Pass-Phase-Responses\phase_response_4.png",
-            5 + 1j,
-            self.scrollAreaWidgetContents,
-        )
-        self.allPass05 = ProcessButton(
-            "a = -0.9",
-            "Resources\All-Pass-Phase-Responses\phase_response_5.png",
-            -0.9,
-            self.scrollAreaWidgetContents,
-        )
-        self.allPass06 = ProcessButton(
-            "a = 1.2",
-            "Resources\All-Pass-Phase-Responses\phase_response_6.png",
-            1.2,
-            self.scrollAreaWidgetContents,
-        )
-        self.allPass07 = ProcessButton(
-            "a = 3",
-            "Resources\All-Pass-Phase-Responses\phase_response_7.png",
             3,
             self.scrollAreaWidgetContents,
         )
+        self.allPass03 = ProcessButton(
+            1.5j,
+            4,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass04 = ProcessButton(
+            5 + 1j,
+            5,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass05 = ProcessButton(
+            -0.9,
+            6,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass06 = ProcessButton(
+            1.2,
+            7,
+            self.scrollAreaWidgetContents,
+        )
+        self.allPass07 = ProcessButton(
+            3,
+            8,
+            self.scrollAreaWidgetContents,
+        )
         self.allPass08 = ProcessButton(
-            "a = 0.2",
-            "Resources\All-Pass-Phase-Responses\phase_response_8.png",
             0.2,
+            9,
             self.scrollAreaWidgetContents,
         )
 

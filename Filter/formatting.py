@@ -8,7 +8,7 @@ import pyqtgraph as pg
 import wfdb
 from Classes.libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QPointF, QTimer
 from PyQt5.QtWidgets import QFileDialog
 from pyqtgraph import TargetItem
 from scipy import signal
@@ -41,9 +41,11 @@ class Backend:
         self.ui.exportFilter.clicked.connect(lambda: self.export_filter())
 
         ## === CUSTOM ALL-PASS CREATION === ##
-        self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
+        self.ui.addAllPassFilter.clicked.connect(
+            lambda: self.customize_all_pass_filter()
+        )
         self.ui.allPassEnteredValue.editingFinished.connect(
-            lambda: self.add_all_pass_filter()
+            lambda: self.customize_all_pass_filter()
         )
 
         ## === APPLYING FILTERS === ##
@@ -124,7 +126,7 @@ class Backend:
 
         # All-Pass Library
         self.user_inputs_values = []
-        self.idx = 9  # to accurately name the plot response of all-pass filter
+        self.idx = 10  # to accurately name the plot response of all-pass filter
         self.cascaded_filters = []  # includes the chosen filters to be cascaded
         self.all_pass_filters = [
             self.ui.allPass00,
@@ -409,6 +411,125 @@ class Backend:
         if fileName:
             np.savetxt(fileName, self.filtered_data, delimiter=",")
 
+    # ORGANIZING ALL-PASS lIBRARY
+    def organize_library(self, scrollAreaLayout, filtersList):
+        for i, filter in enumerate(filtersList):
+            scrollAreaLayout.addWidget(filter, i // 3, i % 3)
+
+    def on_filter_chosen(self, checked, button):
+        if checked:
+            # Move the checked button from all_pass_filters to cascaded_filters
+            if button in self.all_pass_filters:
+                self.all_pass_filters.remove(button)
+                self.cascaded_filters.append(button)
+                self.add_all_pass_zeros_and_poles(button)
+        else:
+            # Move the unchecked button from cascaded_filters to all_pass_filters
+            if button in self.cascaded_filters:
+                self.cascaded_filters.remove(button)
+                self.all_pass_filters.append(button)
+                self.remove_all_pass_zeros_and_poles(
+                    self.all_pass_zeros, button.zero.real, button.zero.imag
+                )
+                self.remove_all_pass_zeros_and_poles(
+                    self.all_pass_poles, button.pole.real, button.pole.imag
+                )
+
+        # Organize both libraries after the change
+        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+
+    def customize_all_pass_filter(self):
+        # Get the value entered in the text field
+        value = self.ui.allPassEnteredValue.text()
+
+        if not self.validate_a_value():
+            self.user_inputs_values.append(value)
+
+            # Instantiate a library button
+            button_number = str(self.idx)
+            button_name = f"allPass{button_number}"
+            button = ProcessButton(value, self.idx, self.ui.scrollAreaWidgetContents)
+            # Set the button name
+            button.setObjectName(button_name)
+
+            # Add the button to the cascaded filters
+            self.cascaded_filters.append(button)
+            self.add_all_pass_zeros_and_poles(button)
+
+            # Set the button to checked initially
+            button.setChecked(True)
+
+            # Connect the button to the organizing library function
+            button.toggled.connect(
+                lambda checked, button=button: self.on_filter_chosen(checked, button)
+            )
+
+            # call the organize libraries function
+            self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+            self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+            # Increment the index in case the user adds another custom filter
+            self.idx += 1
+
+    def validate_a_value(self):
+        value = self.ui.allPassEnteredValue.text()
+
+        if value in self.user_inputs_values:
+            self.show_error(self.ui.value_error, "Filter was already added")
+            return True
+        elif value == "":
+            self.show_error(self.ui.value_error, "Enter a value")
+            return True
+        elif value == "0":
+            self.show_error(self.ui.value_error, "'a' can't be 0")
+            return True
+        elif value == "1":
+            self.show_error(self.ui.value_error, "'a' can't be 1")
+            return True
+        else:
+            for filter in self.all_pass_filters + self.cascaded_filters:
+                if complex(value) == complex(filter.allPassValue):
+                    self.show_error(self.ui.value_error, "Filter already exists")
+                    return True
+
+        # If no duplicate is found, clear the error message and reset the border
+        self.hide_error(self.ui.value_error)
+        return False
+
+    def add_all_pass_zeros_and_poles(self, button):
+        zero_item = self.add_target_item(
+            (button.zero.real, button.zero.imag), False, "o", "orange"
+        )
+        pole_item = self.add_target_item(
+            (button.pole.real, button.pole.imag), False, "x", "orange"
+        )
+        self.all_pass_zeros.append(zero_item)
+        self.all_pass_poles.append(pole_item)
+
+    def remove_all_pass_zeros_and_poles(self, items, real, imag):
+        for item in items:
+            if item.pos() == QPointF(real, imag):
+                self.ui.unitCirclePlot.removeItem(item)
+                items.remove(item)
+
+    def correct_phase(self):
+        if len(self.cascaded_filters) == 0:
+            self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
+            return
+        else:
+            pass
+
+    # VALIDATING INPUT & ERROR MESSAGES
+    def show_error(self, error_label, message):
+        self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
+        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
+        error_label.setVisible(True)
+
+    def hide_error(self, error_label):
+        self.ui.allPassEnteredValue.setStyleSheet("")
+        error_label.clear()
+        error_label.setVisible(False)
+
     # APPLICATION SIGNALS Importing & PLOTTING
     def import_signal(self):
         options = QFileDialog.Options()
@@ -451,151 +572,23 @@ class Backend:
         pass
 
     def update_filtration_rate(self):
-        pass
+        points_value = self.ui.filtration_slider.value()
+        self.ui.speed_label.setText(f"Points: {points_value}")
 
-    def pause_play_action(self):
-        pass
+    def pause_play_action(self, checked):
+        if checked:
+            self.plotting_timer.stop()
+            self.ui.pause_play_button.setIcon(
+                QtGui.QIcon("Resources/Icons/play_button.png")
+            )
+        else:
+            self.plotting_timer.start(self.update_interval)
+            self.ui.pause_play_button.setIcon(
+                QtGui.QIcon("Resources/Icons/pause_button.png")
+            )
 
     def apply_filter(self):
         pass
-
-    # ORGANIZING ALL-PASS lIBRARY
-    def organize_library(self, scrollAreaLayout, filtersList):
-        for i, filter in enumerate(filtersList):
-            scrollAreaLayout.addWidget(filter, i // 3, i % 3)
-
-    def on_filter_chosen(self, checked, button):
-        if checked:
-            # Move the checked button from all_pass_filters to cascaded_filters
-            if button in self.all_pass_filters:
-                self.all_pass_filters.remove(button)
-                self.cascaded_filters.append(button)
-                self.remove_all_pass_zeros_and_poles()
-                self.add_all_pass_zeros_and_poles()
-        else:
-            # Move the unchecked button from cascaded_filters to all_pass_filters
-            if button in self.cascaded_filters:
-                self.cascaded_filters.remove(button)
-                self.all_pass_filters.append(button)
-
-        # Organize both libraries after the change
-        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
-        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
-
-    def add_all_pass_filter(self):
-        # Get the value entered in the text field
-        value = self.ui.allPassEnteredValue.text()
-
-        if not self.validate_a_value():
-            self.user_inputs_values.append(value)
-
-            # Plot the phase response of the all-pass filter
-            plot_image_path = self.store_all_pass_response(value)
-
-            # Instantiate a library button
-            button_number = str(self.idx)
-            button_name = f"allPass0{button_number}"
-            button_text = f"a = {value}"
-            button = ProcessButton(button_text, plot_image_path, value)
-            # Set the button name
-            button.setObjectName(button_name)
-
-            # Add the button to the cascaded filters
-            self.cascaded_filters.append(button)
-
-            # Set the button to checked initially
-            button.setChecked(True)
-
-            # Connect the button to the organizing library function
-            button.toggled.connect(
-                lambda checked, button=button: self.on_filter_chosen(checked, button)
-            )
-
-            # call the organize libraries function
-            self.organize_library(self.ui.gridLayout, self.all_pass_filters)
-            self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
-            # Increment the index in case the user adds another custom filter
-            self.idx += 1
-
-    def validate_a_value(self):
-        value = self.ui.allPassEnteredValue.text()
-
-        if value in self.user_inputs_values:
-            self.show_error(self.ui.value_error, "Filter was already added")
-            return True
-        elif value == "":
-            self.show_error(self.ui.value_error, "Enter a value")
-            return True
-        elif value == "0":
-            self.show_error(self.ui.value_error, "'a' can't be 0")
-            return True
-        elif value == "1":
-            self.show_error(self.ui.value_error, "'a' can't be 1")
-            return True
-        else:
-            for filter in self.all_pass_filters + self.cascaded_filters:
-                if complex(value) == complex(filter.allPassValue):
-                    self.show_error(self.ui.value_error, "Filter already exists")
-                    return True
-
-        # If no duplicate is found, clear the error message and reset the border
-        self.hide_error(self.ui.value_error)
-        return False
-
-    def store_all_pass_response(self, value):
-        a_complex = complex(value)
-
-        pole = a_complex
-        self.all_pass_poles.append(pole)
-        zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
-        self.all_pass_zeros.append(zero)
-
-        # Calculate frequency response using freqz
-        numerator, denominator = signal.zpk2tf(
-            self.all_pass_zeros, self.all_pass_poles, 1
-        )
-        all_pass_frequencies_values, all_pass_response_complex = signal.freqz(
-            numerator, denominator, worN=8000
-        )
-
-        # Plot the phase response
-        plt.figure()
-        plt.plot(
-            all_pass_frequencies_values,
-            np.unwrap(np.angle(all_pass_response_complex)),
-            color="orange",
-            linewidth=5,
-        )
-        plt.axis("off")
-        # Save the plot as a PNG file
-        save_path = os.path.join(save_directory, f"phase_response_{self.idx}.png")
-        plt.savefig(save_path, transparent=True)
-        plt.clf()
-        return save_path
-
-    def add_all_pass_zeros_and_poles(self):
-        # Iterate over the zeros positions and plot them
-        for zero in self.all_pass_zeros:
-            item = self.add_target_item((zero.real, zero.imag), False, "o", "orange")
-            self.all_pass_zeros_items.append(item)
-
-        # Iterate over the poles positions and plot them
-        for pole in self.all_pass_poles:
-            item = self.add_target_item((pole.real, pole.imag), False, "x", "orange")
-            self.all_pass_poles_items.append(item)
-
-    def remove_all_pass_zeros_and_poles(self):
-        for zero_item in self.all_pass_zeros_items:
-            self.ui.unitCirclePlot.removeItem(zero_item)
-        for pole_item in self.all_pass_poles_items:
-            self.ui.unitCirclePlot.removeItem(pole_item)
-
-    def correct_phase(self):
-        if len(self.cascaded_filters) == 0:
-            self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
-            return
-        else:
-            pass
 
     # GENERATE SIGNAL BY MOUSE MOVEMENT
     def start_generating(self, checked):
@@ -603,14 +596,3 @@ class Backend:
 
     def capture_mouse_signal(self, frequency, y):
         pass
-
-    # VALIDATING INPUT & ERROR MESSAGES
-    def show_error(self, error_label, message):
-        self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
-        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
-        error_label.setVisible(True)
-
-    def hide_error(self, error_label):
-        self.ui.allPassEnteredValue.setStyleSheet("")
-        error_label.clear()
-        error_label.setVisible(False)
