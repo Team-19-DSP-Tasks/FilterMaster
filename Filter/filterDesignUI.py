@@ -11,16 +11,17 @@ import webbrowser
 
 import icons as icons
 import pyqtgraph as pg
-from Classes.CSVlabel import CSVLabel, CSVLabelArea
+from Classes.CSVlabel import CSVLabelArea
 from Classes.customPlotWidget_Mouse import CustomPlotWidget
 from Classes.libraryButton import ProcessButton
-from formatting import Backend
+from filterDesignBackend import Backend
+
+# from formatting import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
+from PyQt5.QtWidgets import QAction, QMenu
 from pyqtgraph import PlotWidget
-
-# from filterDesignBackend import Backend
 
 
 class Ui_FilterDesigner(object):
@@ -290,8 +291,8 @@ class Ui_FilterDesigner(object):
         self.unitCirclePlot.addItem(y_axis)
         self.unitCirclePlot.hideAxis("bottom")
         self.unitCirclePlot.hideAxis("left")
-        self.mousePad.hideAxis("bottom")
-        self.mousePad.hideAxis("left")
+        # self.mousePad.hideAxis("bottom")
+        # self.mousePad.hideAxis("left")
 
         circle_roi.removeHandle(0)
         # Set the view range
@@ -507,18 +508,18 @@ class Ui_FilterDesigner(object):
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
         self.speed_label = QtWidgets.QLabel("Points: 1")
-        self.speed_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        self.speed_slider.setFixedWidth(300)
-        self.speed_slider.setMinimum(1)
-        self.speed_slider.setMaximum(100)
-        self.speed_slider.setValue(1)
-        self.speed_slider.setTickInterval(1)
-        self.speed_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.filtration_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.filtration_slider.setFixedWidth(300)
+        self.filtration_slider.setMinimum(1)
+        self.filtration_slider.setMaximum(100)
+        self.filtration_slider.setValue(1)
+        self.filtration_slider.setTickInterval(1)
+        self.filtration_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
         self.label_min = QtWidgets.QLabel(
-            str(self.speed_slider.minimum()), FilterDesigner
+            str(self.filtration_slider.minimum()), FilterDesigner
         )
         self.label_max = QtWidgets.QLabel(
-            str(self.speed_slider.maximum()), FilterDesigner
+            str(self.filtration_slider.maximum()), FilterDesigner
         )
         self.label_min.setAlignment(QtCore.Qt.AlignLeft)
         self.label_max.setAlignment(QtCore.Qt.AlignRight)
@@ -527,7 +528,7 @@ class Ui_FilterDesigner(object):
         self.speedLabelsHorizontalLayout.addWidget(self.label_max)
         self.speedControllerVerticalLayout = QtWidgets.QVBoxLayout()
         self.speedControllerVerticalLayout.addWidget(self.speed_label)
-        self.speedControllerVerticalLayout.addWidget(self.speed_slider)
+        self.speedControllerVerticalLayout.addWidget(self.filtration_slider)
         self.speedControllerVerticalLayout.addLayout(self.speedLabelsHorizontalLayout)
         self.speedHLayout = QtWidgets.QHBoxLayout()
         self.speedHLayout.addItem(spacerItem4)
@@ -536,6 +537,10 @@ class Ui_FilterDesigner(object):
         self.speedHLayout.addItem(spacerItem5)
         self.speedHLayout.addWidget(self.exportSignal)
         self.verticalLayout_7.addLayout(self.speedHLayout)
+
+        self.context_menu = QMenu()
+        self.remove_action = QAction("Remove")
+        self.context_menu.addAction(self.remove_action)
 
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)

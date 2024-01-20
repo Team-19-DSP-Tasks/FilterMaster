@@ -30,10 +30,13 @@ class Backend:
         self.ui.removeAllPoles.clicked.connect(lambda: self.remove_poles())
         self.ui.removeAllZeros.clicked.connect(lambda: self.remove_zeros())
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
+
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
         self.ui.exportSignal.clicked.connect(lambda: self.export())
         self.ui.exportFilter.clicked.connect(lambda: self.export_filter())
-        self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
+        self.ui.filtration_slider.valueChanged.connect(
+            lambda: self.update_filtration_rate()
+        )
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
         self.ui.correctPhase.clicked.connect(
             lambda: self.plot_all_pass_zeros_and_poles()
@@ -311,25 +314,6 @@ class Backend:
             self.poles_conjugates.clear()
             self.zeros_conjugates.clear()
 
-    # EXPORT THE DESIGNED FILTER
-    def export_filter(self):
-        if len(self.poles) == 0 and len(self.zeros) == 0:
-            self.show_error(self.ui.emptyDesign, "Design is empty!")
-        else:
-            self.hide_error(self.ui.emptyDesign)
-            fileName, _ = QFileDialog.getSaveFileName(
-                None, "Save File", "", "CSV Files (*.csv)"
-            )
-            if fileName:
-                with open(fileName, "w", newline="") as file:
-                    writer = csv.writer(file)
-                    writer.writerow([None, "x", "y"])  # Write the column titles
-                    for zero in self.zeros_positions:
-                        writer.writerow(["zero", zero.x(), zero.y()])
-                    writer.writerow([])
-                    for pole in self.poles_positions:
-                        writer.writerow(["pole", pole.x(), pole.y()])
-
     # PLOT MAGNITUDE AND PHASE RESPONSES
     def update_responses(self):
         # Get poles and zeros positions
@@ -349,6 +333,40 @@ class Backend:
 
         # Update phase response plot
         self.phase_curve.setData(frequencies_values, np.angle(response_complex))
+
+    # EXPORT THE DESIGNED FILTER
+    def export_filter(self):
+        if len(self.poles) == 0 and len(self.zeros) == 0:
+            self.show_error(self.ui.emptyDesign, "Design is empty!")
+        else:
+            self.hide_error(self.ui.emptyDesign)
+            fileName, _ = QFileDialog.getSaveFileName(
+                None, "Save File", "", "CSV Files (*.csv)"
+            )
+            if fileName:
+                with open(fileName, "w", newline="") as file:
+                    writer = csv.writer(file)
+                    writer.writerow([None, "x", "y"])  # Write the column titles
+                    for zero in self.zeros_positions:
+                        writer.writerow(["zero", zero.x(), zero.y()])
+                    writer.writerow([])
+                    for pole in self.poles_positions:
+                        writer.writerow(["pole", pole.x(), pole.y()])
+
+    def export(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            np.savetxt(fileName, self.filtered_data, delimiter=",")
+
+    def show_error(self, error_label, message):
+        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
+        error_label.setVisible(True)
+
+    def hide_error(self, error_label):
+        error_label.clear()
+        error_label.setVisible(False)
 
     # APPLICATION SIGNALS PLOTTING
     def import_signal(self):
@@ -391,7 +409,7 @@ class Backend:
 
     def update_plot(self, plot_widget, signal_data):
         plot_widget.clear()
-        self.signal_index += 1
+        self.signal_index += self.ui.filtration_slider.value()
         if self.signal_index >= len(signal_data):
             self.signal_index = 0
 
@@ -411,10 +429,9 @@ class Backend:
         )
         plot_widget.setXRange(*visible_range, padding=0)
 
-    def update_speed(self):
-        points_value = self.ui.speed_slider.value()
+    def update_filtration_rate(self):
+        points_value = self.ui.filtration_slider.value()
         self.ui.speed_label.setText(f"Points: {points_value}")
-        # self.update_interval = max(1, 60 - points_value)
         # self.plotting_timer.setInterval(self.update_interval)
 
     def pause_play_action(self, checked):
@@ -440,13 +457,6 @@ class Backend:
         self.plotting_timer.start(self.update_interval)
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
-
-    def export(self):
-        fileName, _ = QFileDialog.getSaveFileName(
-            None, "Save File", "", "CSV Files (*.csv)"
-        )
-        if fileName:
-            np.savetxt(fileName, self.filtered_data, delimiter=",")
 
     # ORGANIZING ALL-PASS lIBRARY
     def organize_library(self, scrollAreaLayout, filtersList):
@@ -520,7 +530,7 @@ class Backend:
             self.show_error(self.ui.value_error, "'a' can't be 1")
             return True
         else:
-            for filter in self.all_pass_filters:
+            for filter in self.all_pass_filters + self.cascaded_filters:
                 if complex(value) == complex(filter.allPassValue):
                     self.ui.allPassEnteredValue.setStyleSheet(
                         "border: 1px solid #ef0f2e;"
@@ -532,14 +542,6 @@ class Backend:
         self.ui.allPassEnteredValue.setStyleSheet("")
         self.hide_error(self.ui.value_error)
         return False
-
-    def show_error(self, error_label, message):
-        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
-        error_label.setVisible(True)
-
-    def hide_error(self, error_label):
-        error_label.clear()
-        error_label.setVisible(False)
 
     def plot_all_pass_single_filter(self, value):
         a_complex = complex(value)
@@ -615,8 +617,8 @@ class Backend:
 
     def capture_mouse_signal(self, frequency, y):
         self.original_data.append(y)
-        self.filtered_data = self.original_data
+        self.filtered_data = [0] + self.original_data
         self.mouse_signal_frequencies.append(frequency)
-
+        self.apply_filter()
         # Update the real-time plots
         self.update_real_time_plots()
