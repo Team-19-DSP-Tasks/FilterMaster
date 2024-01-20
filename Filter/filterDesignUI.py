@@ -11,13 +11,16 @@ import webbrowser
 
 import icons as icons
 import pyqtgraph as pg
+from Classes.CSVlabel import CSVLabel, CSVLabelArea
 from Classes.customPlotWidget_Mouse import CustomPlotWidget
 from Classes.libraryButton import ProcessButton
-from filterDesignBackend import Backend
+from formatting import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
 from pyqtgraph import PlotWidget
+
+# from filterDesignBackend import Backend
 
 
 class Ui_FilterDesigner(object):
@@ -62,6 +65,10 @@ class Ui_FilterDesigner(object):
         self.verticalLayout_7.addWidget(self.originalApplicationSignal)
         self.verticalLayout_7.addWidget(self.filteredSignal)
         self.verticalLayout_9.addWidget(self.applicationGraphs)
+
+        # CSV
+        self.csvViewer = CSVLabelArea()
+
         self.mousePadGroupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.mousePadGroupBox.setMinimumSize(QtCore.QSize(250, 200))
         self.mousePadGroupBox.setMaximumSize(QtCore.QSize(450, 400))
@@ -81,6 +88,7 @@ class Ui_FilterDesigner(object):
         )
         self.mousePadHorizontalLayout.addItem(spacerItem2)
         self.mousePadHorizontalLayout.addWidget(self.mousePadGroupBox)
+        self.mousePadHorizontalLayout.addWidget(self.csvViewer)
         self.mousePadHorizontalLayout.addItem(spacerItem3)
 
         self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.mousePadGroupBox)
@@ -224,8 +232,8 @@ class Ui_FilterDesigner(object):
 
         self.allPassLibrary.setWidget(self.dockWidgetContents_3)
         FilterDesigner.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.allPassLibrary)
-        self.dockWidget_3 = QtWidgets.QDockWidget(FilterDesigner)
-        self.dockWidget_3.setObjectName("dockWidget_3")
+        self.zPlane_dock_widget = QtWidgets.QDockWidget(FilterDesigner)
+        self.zPlane_dock_widget.setObjectName("dockWidget_3")
         self.dockWidgetContents_4 = QtWidgets.QWidget()
         self.dockWidgetContents_4.setObjectName("dockWidgetContents_4")
         self.dockWidgetContents_4.setMinimumSize(QtCore.QSize(400, 0))
@@ -312,12 +320,14 @@ class Ui_FilterDesigner(object):
         self.zPlaneDesignControls.setObjectName("zPlaneDesignControls")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.zPlaneDesignControls)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.addPole = QtWidgets.QPushButton(self.zPlaneDesignControls)
-        self.addPole.setObjectName("addPole")
-        self.verticalLayout.addWidget(self.addPole)
         self.addZero = QtWidgets.QPushButton(self.zPlaneDesignControls)
         self.addZero.setObjectName("addZero")
+        self.addZero.setCheckable(True)
         self.verticalLayout.addWidget(self.addZero)
+        self.addPole = QtWidgets.QPushButton(self.zPlaneDesignControls)
+        self.addPole.setObjectName("addPole")
+        self.addPole.setCheckable(True)
+        self.verticalLayout.addWidget(self.addPole)
         self.removeAllPoles = QtWidgets.QPushButton(self.zPlaneDesignControls)
         self.removeAllPoles.setObjectName("removeAllPoles")
         self.verticalLayout.addWidget(self.removeAllPoles)
@@ -385,8 +395,10 @@ class Ui_FilterDesigner(object):
         self.allPassPhaseResponse.showGrid(True, True)
         self.verticalLayout_3.addWidget(self.phaseFrequencyResponse)
         self.verticalLayout_2.addWidget(self.frequencyResponseGroupBox)
-        self.dockWidget_3.setWidget(self.dockWidgetContents_4)
-        FilterDesigner.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.dockWidget_3)
+        self.zPlane_dock_widget.setWidget(self.dockWidgetContents_4)
+        FilterDesigner.addDockWidget(
+            QtCore.Qt.DockWidgetArea(1), self.zPlane_dock_widget
+        )
         self.actionImport_Signal = QtWidgets.QAction(FilterDesigner)
         self.actionImport_Signal.setObjectName("actionImport_Signal")
         self.actionImport_Signal.setShortcut("Ctrl+I")
@@ -402,7 +414,7 @@ class Ui_FilterDesigner(object):
         self.toggle_dock1_action.setCheckable(True)
         self.toggle_dock1_action.setChecked(True)
         self.toggle_dock1_action.triggered.connect(
-            lambda: self.toggle_dock_visibility(self.dockWidget_3)
+            lambda: self.toggle_dock_visibility(self.zPlane_dock_widget)
         )
         self.menuView_2.addAction(self.toggle_dock1_action)
 
@@ -413,6 +425,13 @@ class Ui_FilterDesigner(object):
             lambda: self.toggle_dock_visibility(self.allPassLibrary)
         )
         self.menuView_2.addAction(self.toggle_dock2_action)
+        self.toggle_dock3_action = QtWidgets.QAction("Mouse Pad", FilterDesigner)
+        self.toggle_dock3_action.setCheckable(True)
+        self.toggle_dock3_action.setChecked(True)
+        self.toggle_dock3_action.triggered.connect(
+            lambda: self.toggle_dock_visibility(self.mousePadGroupBox)
+        )
+        self.menuView_2.addAction(self.toggle_dock3_action)
 
         self.actionOpen_Docs = QtWidgets.QAction("App Documentation", FilterDesigner)
         self.actionOpen_Docs.triggered.connect(self.open_documentation)
@@ -552,7 +571,7 @@ class Ui_FilterDesigner(object):
             _translate("FilterDesigner", "Add custom all-pass filter")
         )
         self.correctPhase.setText(_translate("FilterDesigner", "Correct Phase"))
-        self.dockWidget_3.setWindowTitle(
+        self.zPlane_dock_widget.setWindowTitle(
             _translate("FilterDesigner", "Z-Plane Filter Design")
         )
         self.filterDesignGroupBox.setTitle(

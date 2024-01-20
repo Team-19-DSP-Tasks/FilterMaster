@@ -2,7 +2,7 @@ PRIORITY:
 =========
 1. Mouse
 2. All pass fine tune ->
-	-	Filters should not be removed from library
+	-	Filters should not be removed from library [postponed]
 	-	Upon "choosing" any filter, its zero and pole
 		should be plotted in the z-plane
 	-	Upon "adding" any filter, its zero and pole
