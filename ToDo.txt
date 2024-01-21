@@ -25,6 +25,9 @@ DONE:
 7. By default, the user can plot zeros ->
 	add a default mode and that means you may want to consider
 	converting addPole and addZero to checkable buttons
+8. Import filter by drag and drop
+9. Corner case: all pass filter exists in library but was moved to the cascaded, didn't check
+10. Corner case: showing and hiding the dockwidgets
 
 
 EXTRA:
@@ -34,11 +37,9 @@ EXTRA:
 3. UI revise colors and whole design
 4. 3D visualisation
 5. Save application
-6. Corner case: all pass filter exists in library but was moved to the cascaded, didn't check || Change the whole library
-8. Corner case: showing and hiding the dockwidgets
-9. Import filter by drag and drop
 10. Add conjugate to a single specific zero or pole
 11. Fine Tune: addzero and addpole buttons checking
+12. Zplane filters examples
 
 NOT CONSIDERED WORK:
 ====================

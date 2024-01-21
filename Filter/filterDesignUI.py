@@ -193,12 +193,12 @@ class Ui_FilterDesigner(object):
         self.inputALabel.setFont(font)
         self.inputALabel.setObjectName("inputALabel")
         self.horizontalLayout.addWidget(self.inputALabel)
-        self.allPassEnteredValue = QtWidgets.QLineEdit(self.allPassDesignGroupBox)
-        self.allPassEnteredValue.setPlaceholderText("Enter a value")
+        self.gainInput = QtWidgets.QLineEdit(self.allPassDesignGroupBox)
+        self.gainInput.setPlaceholderText("Enter a value")
         self.validator = CustomValidator()
-        self.allPassEnteredValue.setValidator(self.validator)
-        self.allPassEnteredValue.setObjectName("textField")
-        self.horizontalLayout.addWidget(self.allPassEnteredValue)
+        self.gainInput.setValidator(self.validator)
+        self.gainInput.setObjectName("textField")
+        self.horizontalLayout.addWidget(self.gainInput)
         self.verticalLayout_4.addLayout(self.horizontalLayout)
         self.addAllPassFilter = QtWidgets.QPushButton(self.allPassDesignGroupBox)
         self.addAllPassFilter.setObjectName("pushButton")
@@ -221,7 +221,7 @@ class Ui_FilterDesigner(object):
         self.allPassPhaseResponse.setLabel("left", "Phase [radians]")
         self.verticalLayout_8.addWidget(self.allPassPhaseResponse)
         self.correctPhase = QtWidgets.QPushButton(self.dockWidgetContents_3)
-        self.correctPhase.setObjectName("applyFilterButton_2")
+        self.correctPhase.setObjectName("correctPhase")
         self.verticalLayout_8.addWidget(self.correctPhase)
 
         ### label for error upon correcting phase
@@ -439,6 +439,9 @@ class Ui_FilterDesigner(object):
         )
         self.menuView.addAction(self.toggle_dock3_action)
 
+        self.zPlane_dock_widget.visibilityChanged.connect(self.toggleZPlaneButton)
+        self.allPassLibrary.visibilityChanged.connect(self.toggleAllpassButton)
+
         ##### Tools Menu #####
         self.actionExamples = QAction("Examples", FilterDesigner)
         self.menuExamples = QMenu("Examples", FilterDesigner)
@@ -556,6 +559,23 @@ class Ui_FilterDesigner(object):
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)
 
+    def toggleZPlaneButton(self, visible):
+        # Update the toggle button's state based on the visibility of the dock widget
+        self.toggle_dock1_action.setChecked(visible)
+
+    def toggleAllpassButton(self, visible):
+        # Update the toggle button's state based on the visibility of the dock widget
+        self.toggle_dock2_action.setChecked(visible)
+
+    def toggle_dock_visibility(self, dock):
+        if dock.isVisible():
+            dock.close()
+        else:
+            dock.show()
+
+    def exitApplication(self):
+        sys.exit()
+
     def open_documentation(self):
         webbrowser.open("https://github.com/Team-19-DSP-Tasks/Task06-FilterDesign")
 
@@ -613,15 +633,6 @@ class Ui_FilterDesigner(object):
         )
         self.actionImport_Signal.setText(_translate("FilterDesigner", "Import Signal"))
         self.actionExit.setText(_translate("FilterDesigner", "Exit"))
-
-    def toggle_dock_visibility(self, dock):
-        if dock.isVisible():
-            dock.close()
-        else:
-            dock.show()
-
-    def exitApplication(self):
-        sys.exit()
 
 
 class CustomValidator(QValidator):

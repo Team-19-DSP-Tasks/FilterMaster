@@ -43,7 +43,7 @@ class Backend:
         self.ui.addAllPassFilter.clicked.connect(
             lambda: self.customize_all_pass_filter()
         )
-        self.ui.allPassEnteredValue.editingFinished.connect(
+        self.ui.gainInput.returnPressed.connect(
             lambda: self.customize_all_pass_filter()
         )
 
@@ -403,7 +403,9 @@ class Backend:
     # EXPORT THE DESIGNED FILTER
     def export_filter(self):
         if len(self.poles) == 0 and len(self.zeros) == 0:
-            self.show_error(self.ui.emptyDesign, "Design is empty!")
+            self.show_error(
+                self.ui.emptyDesign, "Design is empty!", self.ui.exportFilter
+            )
         else:
             self.hide_error(self.ui.emptyDesign)
             fileName, _ = QFileDialog.getSaveFileName(
@@ -479,10 +481,10 @@ class Backend:
 
     def customize_all_pass_filter(self):
         # Get the value entered in the text field
-        value = self.ui.allPassEnteredValue.text()
+        value = self.ui.gainInput.text()
         if not self.validate_a_value():
             self.user_inputs_values.append(value)
-            self.ui.allPassEnteredValue.clear()
+            self.ui.gainInput.clear()
 
             # Instantiate a library button
             button_number = str(self.idx)
@@ -511,24 +513,38 @@ class Backend:
             self.idx += 1
 
     def validate_a_value(self):
-        value = self.ui.allPassEnteredValue.text()
+        value = self.ui.gainInput.text()
 
         if value in self.user_inputs_values:
-            self.show_error(self.ui.value_error, "Filter was already added")
+            self.show_error(
+                self.ui.value_error,
+                "Filter was already added",
+                self.ui.gainInput,
+            )
             return True
         elif value == "":
-            self.show_error(self.ui.value_error, "Enter a value")
+            self.show_error(
+                self.ui.value_error, "Enter a value", self.ui.gainInput
+            )
             return True
         elif value == "0":
-            self.show_error(self.ui.value_error, "'a' can't be 0")
+            self.show_error(
+                self.ui.value_error, "'a' can't be 0", self.ui.gainInput
+            )
             return True
         elif value == "1":
-            self.show_error(self.ui.value_error, "'a' can't be 1")
+            self.show_error(
+                self.ui.value_error, "'a' can't be 1", self.ui.gainInput
+            )
             return True
         else:
             for filter in self.all_pass_filters + self.cascaded_filters:
                 if complex(value) == complex(filter.allPassValue):
-                    self.show_error(self.ui.value_error, "Filter already exists")
+                    self.show_error(
+                        self.ui.value_error,
+                        "Filter already exists",
+                        self.ui.gainInput,
+                    )
                     return True
 
         # If no duplicate is found, clear the error message and reset the border
@@ -587,7 +603,9 @@ class Backend:
     def correct_phase(self):
         if len(self.cascaded_filters) == 0:
             self.show_error(
-                self.ui.filterNotChosen, "Please, Pick a filter or make one!"
+                self.ui.filterNotChosen,
+                "Please, Pick a filter or make one!",
+                self.ui.correctPhase,
             )
             return
         else:
@@ -604,13 +622,13 @@ class Backend:
             )
 
     # VALIDATING INPUT & ERROR MESSAGES
-    def show_error(self, error_label, message):
-        self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
+    def show_error(self, error_label, message, widget):
+        widget.setStyleSheet("border: 1px solid #ef0f2e;")
         error_label.setText(f'<font color="#ef0f2e">{message}</font>')
         error_label.setVisible(True)
 
     def hide_error(self, error_label):
-        self.ui.allPassEnteredValue.setStyleSheet("")
+        self.ui.gainInput.setStyleSheet("")
         error_label.clear()
         error_label.setVisible(False)
 
@@ -659,17 +677,17 @@ class Backend:
             self.ui.filtration_slider.value()
         )  # Increment by the value of the slider
         if self.signal_index >= len(signal_data):
-            self.signal_index = len(signal_data)
+            self.signal_index = 0  # Reset the signal index to 0
 
         x_data = np.arange(self.signal_index)
         y_data = signal_data[: self.signal_index]
-        y_max = max(y_data)
-        y_min = min(y_data)
+        y_max = max(signal_data)
+        y_min = min(signal_data)
 
         plot_widget.plot(x=x_data, y=y_data, pen="orange")
         plot_widget.setYRange(y_min, y_max, padding=0.1)
 
-        visible_range = (self.signal_index - 150, self.signal_index + 30)
+        visible_range = (self.signal_index - 150, self.signal_index + 150)
         x_min_limit, x_max_limit = 0, self.signal_index + 0.1
 
         plot_widget.setLimits(
@@ -679,7 +697,7 @@ class Backend:
 
     def update_filtration_rate(self):
         points_value = self.ui.filtration_slider.value()
-        self.ui.speed_label.setText(f"Points: {points_value}")
+        self.ui.filtration_label.setText(f"Filtered Points: {points_value}")
 
     def pause_play_action(self, checked):
         if checked:
@@ -700,6 +718,7 @@ class Backend:
 
     def slice_data(self):
         points = self.ui.filtration_slider.value()
+        # chunk is the end of the slice
         chunk = self.slicing_idx + points
         if chunk > len(self.original_data):
             self.applying_timer.stop()
@@ -719,8 +738,12 @@ class Backend:
 
     def apply_filter(self):
         if len(self.poles) == 0 and len(self.zeros) == 0:
-            self.show_error(self.ui.emptyDesign, "Design is empty!")
+            self.show_error(
+                self.ui.emptyDesign, "Design is empty!", self.ui.applyFilterButton
+            )
             return
+
+        self.ui.filtration_slider.setValue(len(self.poles) + len(self.zeros))
 
         # Reset parameters
         self.signal_index = 0
@@ -728,7 +751,7 @@ class Backend:
         self.filtered_data = np.array([])
 
         # Restart timers
-        self.plotting_timer.start(self.update_interval)
+        # self.plotting_timer.start(self.update_interval)
         self.applying_timer.start(self.update_interval)
 
         if self.ui.pause_play_button.isChecked():
