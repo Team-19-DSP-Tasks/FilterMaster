@@ -515,6 +515,9 @@ class Ui_FilterDesigner(object):
         self.pause_play_button.setCheckable(True)
         self.pause_play_button.setObjectName("pause_play_button")
         self.pause_play_button.setIcon(QtGui.QIcon("Resources/Icons/pause_button.png"))
+        self.resetSignal = QtWidgets.QPushButton()
+        self.resetSignal.setObjectName("resetSignal")
+        self.resetSignal.setIcon(QtGui.QIcon("Resources/Icons/reset.png"))
         spacerItem4 = QtWidgets.QSpacerItem(
             40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
         )
@@ -547,6 +550,7 @@ class Ui_FilterDesigner(object):
         self.speedHLayout = QtWidgets.QHBoxLayout()
         self.speedHLayout.addItem(spacerItem4)
         self.speedHLayout.addWidget(self.pause_play_button)
+        self.speedHLayout.addWidget(self.resetSignal)
         self.speedHLayout.addLayout(self.speedControllerVerticalLayout)
         self.speedHLayout.addItem(spacerItem5)
         self.speedHLayout.addWidget(self.exportSignal)

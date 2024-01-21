@@ -65,6 +65,10 @@ class Backend:
         self.ui.pause_play_button.toggled.connect(
             lambda checked: self.pause_play_action(checked)
         )
+
+        ## === RESET PLOTTING === ##
+        self.ui.resetSignal.clicked.connect(self.reset_signal)
+
         ## === CHANGE FILTRATION RATE === ##
         self.ui.filtration_slider.valueChanged.connect(
             lambda: self.update_filtration_rate()
@@ -131,6 +135,9 @@ class Backend:
         # Data storing variables to be plotted: initially defined
         self.original_data = []
         self.filtered_data = []
+
+        # Not to reset mouse signal
+        self.mouse_signal = False
 
         # All-Pass Library
         self.user_inputs_values = []
@@ -523,19 +530,13 @@ class Backend:
             )
             return True
         elif value == "":
-            self.show_error(
-                self.ui.value_error, "Enter a value", self.ui.gainInput
-            )
+            self.show_error(self.ui.value_error, "Enter a value", self.ui.gainInput)
             return True
         elif value == "0":
-            self.show_error(
-                self.ui.value_error, "'a' can't be 0", self.ui.gainInput
-            )
+            self.show_error(self.ui.value_error, "'a' can't be 0", self.ui.gainInput)
             return True
         elif value == "1":
-            self.show_error(
-                self.ui.value_error, "'a' can't be 1", self.ui.gainInput
-            )
+            self.show_error(self.ui.value_error, "'a' can't be 1", self.ui.gainInput)
             return True
         else:
             for filter in self.all_pass_filters + self.cascaded_filters:
@@ -623,8 +624,8 @@ class Backend:
 
     # VALIDATING INPUT & ERROR MESSAGES
     def show_error(self, error_label, message, widget):
-        widget.setStyleSheet("border: 1px solid #ef0f2e;")
-        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
+        widget.setStyleSheet("border: 1px solid orange;")
+        error_label.setText(f'<font color="orange">{message}</font>')
         error_label.setVisible(True)
 
     def hide_error(self, error_label):
@@ -677,7 +678,8 @@ class Backend:
             self.ui.filtration_slider.value()
         )  # Increment by the value of the slider
         if self.signal_index >= len(signal_data):
-            self.signal_index = 0  # Reset the signal index to 0
+            self.signal_index = len(signal_data)  # Reset the signal index to 0
+            self.plotting_timer.stop()
 
         x_data = np.arange(self.signal_index)
         y_data = signal_data[: self.signal_index]
@@ -715,6 +717,15 @@ class Backend:
             self.ui.pause_play_button.setIcon(
                 QtGui.QIcon("Resources/Icons/pause_button.png")
             )
+
+    def reset_signal(self):
+        self.plotting_timer.stop()
+        self.applying_timer.stop()
+        self.ui.originalSignalPlot.clear()
+        self.ui.filteredSignalPlot.clear()
+        self.signal_index = 0
+        self.slicing_idx = 0
+        self.plotting_timer.start(self.update_interval)
 
     def slice_data(self):
         points = self.ui.filtration_slider.value()
