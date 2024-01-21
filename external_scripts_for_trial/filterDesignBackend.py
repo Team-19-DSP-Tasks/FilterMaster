@@ -6,13 +6,14 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import wfdb
-from Classes.libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
 from pyqtgraph import TargetItem
 from scipy import signal
 from scipy.signal import freqz, zpk2tf
+
+from Filter.Classes.libraryButton import ProcessButton
 
 # A folder to store the phase response plots of all-pass filters
 save_directory = "Resources/All-Pass-Phase-Responses"

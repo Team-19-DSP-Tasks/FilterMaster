@@ -1,7 +1,6 @@
 import csv
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
@@ -11,7 +10,6 @@ from PyQt5 import QtCore, QtGui
 from PyQt5.QtCore import QPointF, QTimer
 from PyQt5.QtWidgets import QFileDialog
 from pyqtgraph import TargetItem
-from scipy import signal
 from scipy.signal import freqz, lfilter, zpk2tf
 
 # A folder to store the phase response plots of all-pass filters
@@ -125,9 +123,13 @@ class Backend:
         self.plotting_timer.timeout.connect(self.update_real_time_plots)
         self.signal_index = 0
 
+        self.slicing_idx = 0
+        self.applying_timer = QTimer()
+        self.applying_timer.timeout.connect(self.slice_data)
+
         # Data storing variables to be plotted: initially defined
         self.original_data = []
-        self.filtered_data = self.original_data
+        self.filtered_data = []
 
         # All-Pass Library
         self.user_inputs_values = []
@@ -526,12 +528,12 @@ class Backend:
                 items.remove(item)
 
     def update_z_plane_view(self):
-        max_value = 0
+        max_value = 1.1
         for item in self.all_pass_zeros + self.all_pass_poles:
             max_value = max(max_value, item.pos().x())
             max_value = max(max_value, item.pos().y())
 
-        max_value += 0.2 # to make the plane visually appealing
+        max_value += 0.2  # to make the plane visually appealing
         self.ui.unitCirclePlot.setRange(
             xRange=(-max_value, max_value), yRange=(-max_value, max_value)
         )
@@ -560,9 +562,12 @@ class Backend:
 
     def correct_phase(self):
         if len(self.cascaded_filters) == 0:
-            self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
+            self.show_error(
+                self.ui.filterNotChosen, "Please, Pick a filter or make one!"
+            )
             return
         else:
+            self.hide_error(self.ui.filterNotChosen)
             corrected_numerator, corrected_denominator = np.convolve(
                 self.cascaded_numerator, self.numerator
             ), np.convolve(self.cascaded_denominator, self.denominator)
@@ -626,9 +631,11 @@ class Backend:
 
     def update_plot(self, plot_widget, signal_data):
         plot_widget.clear()
-        self.signal_index += self.ui.filtration_slider.value()
+        self.signal_index += (
+            self.ui.filtration_slider.value()
+        )  # Increment by the value of the slider
         if self.signal_index >= len(signal_data):
-            self.signal_index = 0
+            self.signal_index = len(signal_data)
 
         x_data = np.arange(self.signal_index)
         y_data = signal_data[: self.signal_index]
@@ -653,24 +660,52 @@ class Backend:
     def pause_play_action(self, checked):
         if checked:
             self.plotting_timer.stop()
+            self.applying_timer.stop()  # Also stop the applying_timer
             self.ui.pause_play_button.setIcon(
                 QtGui.QIcon("Resources/Icons/play_button.png")
             )
         else:
             self.plotting_timer.start(self.update_interval)
+            self.applying_timer.start(
+                self.update_interval
+            )  # Also start the applying_timer
             self.ui.pause_play_button.setIcon(
                 QtGui.QIcon("Resources/Icons/pause_button.png")
             )
+
+    def slice_data(self):
+        points = self.ui.filtration_slider.value()
+        chunk = self.slicing_idx + points
+        if chunk > len(self.original_data):
+            self.applying_timer.stop()
+            self.apply_filter()  # Restart the filtration and plotting
+            return
+        self.filtered_data = np.append(
+            self.filtered_data,
+            lfilter(
+                self.numerator,
+                self.denominator,
+                self.original_data[self.slicing_idx : chunk],
+            ).real,
+        )
+
+        self.update_real_time_plots()
+        self.slicing_idx += points
 
     def apply_filter(self):
         if len(self.poles) == 0 and len(self.zeros) == 0:
             self.show_error(self.ui.emptyDesign, "Design is empty!")
             return
-        self.filtered_data = signal.lfilter(
-            self.numerator, self.denominator, self.original_data
-        ).real
+
+        # Reset parameters
         self.signal_index = 0
+        self.slicing_idx = 0
+        self.filtered_data = np.array([])
+
+        # Restart timers
         self.plotting_timer.start(self.update_interval)
+        self.applying_timer.start(self.update_interval)
+
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
 
