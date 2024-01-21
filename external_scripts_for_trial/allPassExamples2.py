@@ -96,6 +96,68 @@
 # plt.grid(True)
 # plt.show()
 
+# import matplotlib.pyplot as plt
+# import numpy as np
+# from scipy import signal
+
+# # List of 'a' values
+# a_values = [0.7, 1 + 2j, 0.3 + 0.2j, 1.5j, 5 + 1j, -0.9, 1.2, 3, 0.2]
+
+# # Create a directory to save the plots
+# import os
+
+# save_directory = "All-Pass-Phase-Responses"
+# os.makedirs(save_directory, exist_ok=True)
+
+# # Initialize lists of tuples for zeros and poles
+# zeros_coords = []
+# poles_coords = []
+
+# # Iterate over 'a' values
+# for idx, a_value in enumerate(a_values):
+#     a_complex = complex(a_value)
+#     zeros = []
+#     poles = []
+#     pole = a_complex
+#     poles.append(pole)
+#     zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
+#     zeros.append(zero)
+
+#     # Append (x, y) coordinates to the lists
+#     zeros_coords.append((zero.real, zero.imag))
+#     poles_coords.append((pole.real, pole.imag))
+
+#     # Calculate frequency response using freqz
+#     b, a = signal.zpk2tf(zeros, poles, 1)
+#     w, h = signal.freqz(b, a, worN=8000)
+
+# # Find the maximum x and y values
+# max_zeros_x = max(zeros_coords, key=lambda x: x[0])[0]
+# max_zeros_y = max(zeros_coords, key=lambda x: x[1])[1]
+# max_poles_x = max(poles_coords, key=lambda x: x[0])[0]
+# max_poles_y = max(poles_coords, key=lambda x: x[1])[1]
+
+# # Print the maximum x and y values
+# print("Maximum Zeros X:", max_zeros_x)
+# print("Maximum Zeros Y:", max_zeros_y)
+# print("Maximum Poles X:", max_poles_x)
+# print("Maximum Poles Y:", max_poles_y)
+
+# # Plot zeros and poles
+# zeros_x, zeros_y = zip(*zeros_coords)
+# poles_x, poles_y = zip(*poles_coords)
+
+# plt.scatter(zeros_x, zeros_y, marker="o", label="Zeros")
+# plt.scatter(poles_x, poles_y, marker="x", label="Poles")
+
+# # Plot settings
+# plt.xlabel("Real")
+# plt.ylabel("Imaginary")
+# plt.title("Zeros and Poles")
+# plt.legend()
+# plt.grid(True)
+# plt.show()
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
@@ -113,47 +175,37 @@ os.makedirs(save_directory, exist_ok=True)
 zeros_coords = []
 poles_coords = []
 
+# Initialize a transfer function numerator and denominator
+numerator = [1]
+denominator = [1]
+
 # Iterate over 'a' values
 for idx, a_value in enumerate(a_values):
     a_complex = complex(a_value)
-    zeros = []
-    poles = []
     pole = a_complex
-    poles.append(pole)
     zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
-    zeros.append(zero)
 
-    # Append (x, y) coordinates to the lists
-    zeros_coords.append((zero.real, zero.imag))
-    poles_coords.append((pole.real, pole.imag))
+    # Multiply the transfer function with the new filter
+    numerator = np.convolve(numerator, [1, -zero])
+    denominator = np.convolve(denominator, [1, -pole])
 
-    # Calculate frequency response using freqz
-    b, a = signal.zpk2tf(zeros, poles, 1)
-    w, h = signal.freqz(b, a, worN=8000)
+    # Save zeros and poles
+    zeros_coords.append(zero)
+    poles_coords.append(pole)
 
-# Find the maximum x and y values
-max_zeros_x = max(zeros_coords, key=lambda x: x[0])[0]
-max_zeros_y = max(zeros_coords, key=lambda x: x[1])[1]
-max_poles_x = max(poles_coords, key=lambda x: x[0])[0]
-max_poles_y = max(poles_coords, key=lambda x: x[1])[1]
+# Frequency range for phase response
+freq_range = np.logspace(-2, 2, 1000)
 
-# Print the maximum x and y values
-print("Maximum Zeros X:", max_zeros_x)
-print("Maximum Zeros Y:", max_zeros_y)
-print("Maximum Poles X:", max_poles_x)
-print("Maximum Poles Y:", max_poles_y)
+# Calculate the transfer function at different frequencies
+system = signal.TransferFunction(numerator, denominator)
+_, phase_response = signal.freqresp(system, freq_range)
 
-# Plot zeros and poles
-zeros_x, zeros_y = zip(*zeros_coords)
-poles_x, poles_y = zip(*poles_coords)
-
-plt.scatter(zeros_x, zeros_y, marker="o", label="Zeros")
-plt.scatter(poles_x, poles_y, marker="x", label="Poles")
-
-# Plot settings
-plt.xlabel("Real")
-plt.ylabel("Imaginary")
-plt.title("Zeros and Poles")
-plt.legend()
+# Plot the phase response
+plt.figure()
+plt.semilogx(freq_range, np.unwrap(np.angle(phase_response, deg=True)))
+plt.title("Cascaded All-Pass Filters Phase Response")
+plt.xlabel("Frequency [Hz]")
+plt.ylabel("Phase [degrees]")
 plt.grid(True)
+plt.savefig(os.path.join(save_directory, "cascaded_phase_response.png"))
 plt.show()

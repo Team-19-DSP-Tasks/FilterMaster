@@ -11,17 +11,15 @@ import webbrowser
 
 import icons as icons
 import pyqtgraph as pg
-from Classes.CSVlabel import CSVLabelArea
-from Classes.customPlotWidget_Mouse import CustomPlotWidget
+from Classes.CSVpickUpArea import CSVLabelArea
 from Classes.libraryButton import ProcessButton
+from Classes.mousePlotWidget import CustomPlotWidget
 from formatting import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
 from PyQt5.QtWidgets import QAction, QMenu
 from pyqtgraph import PlotWidget
-
-# from filterDesignBackend import Backend
 
 
 class Ui_FilterDesigner(object):
@@ -49,22 +47,22 @@ class Ui_FilterDesigner(object):
         self.applicationGraphs.setObjectName("applicationGraphs")
         self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.applicationGraphs)
         self.verticalLayout_7.setObjectName("verticalLayout_7")
-        self.filteredSignal = PlotWidget(self.applicationGraphs)
-        self.filteredSignal.setMinimumSize(QtCore.QSize(0, 0))
-        self.filteredSignal.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.filteredSignal.setObjectName("filteredSignal")
-        self.filteredSignal.setTitle("Filtered Signal")
-        self.filteredSignal.setLabel("bottom", "time")
-        self.filteredSignal.setLabel("left", "ampltiude")
-        self.originalApplicationSignal = PlotWidget(self.applicationGraphs)
-        self.originalApplicationSignal.setMinimumSize(QtCore.QSize(0, 0))
-        self.originalApplicationSignal.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.originalApplicationSignal.setObjectName("originalApplicationSignal")
-        self.originalApplicationSignal.setTitle("Original Signal")
-        self.originalApplicationSignal.setLabel("bottom", "time")
-        self.originalApplicationSignal.setLabel("left", "ampltiude")
-        self.verticalLayout_7.addWidget(self.originalApplicationSignal)
-        self.verticalLayout_7.addWidget(self.filteredSignal)
+        self.filteredSignalPlot = PlotWidget(self.applicationGraphs)
+        self.filteredSignalPlot.setMinimumSize(QtCore.QSize(0, 0))
+        self.filteredSignalPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.filteredSignalPlot.setObjectName("filteredSignal")
+        self.filteredSignalPlot.setTitle("Filtered Signal")
+        self.filteredSignalPlot.setLabel("bottom", "time")
+        self.filteredSignalPlot.setLabel("left", "ampltiude")
+        self.originalSignalPlot = PlotWidget(self.applicationGraphs)
+        self.originalSignalPlot.setMinimumSize(QtCore.QSize(0, 0))
+        self.originalSignalPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.originalSignalPlot.setObjectName("originalApplicationSignal")
+        self.originalSignalPlot.setTitle("Original Signal")
+        self.originalSignalPlot.setLabel("bottom", "time")
+        self.originalSignalPlot.setLabel("left", "ampltiude")
+        self.verticalLayout_7.addWidget(self.originalSignalPlot)
+        self.verticalLayout_7.addWidget(self.filteredSignalPlot)
         self.verticalLayout_9.addWidget(self.applicationGraphs)
 
         # CSV
@@ -291,8 +289,10 @@ class Ui_FilterDesigner(object):
         self.unitCirclePlot.addItem(y_axis)
         self.unitCirclePlot.hideAxis("bottom")
         self.unitCirclePlot.hideAxis("left")
-        # self.mousePad.hideAxis("bottom")
-        # self.mousePad.hideAxis("left")
+        self.mousePad.hideAxis("bottom")
+        self.mousePad.hideAxis("left")
+        self.mousePad.setRange(xRange=(-50, 250), yRange=(-200, 200))
+        self.mousePad.setLimits(xMin=-50, xMax=250, yMin=-200, yMax=200)
 
         circle_roi.removeHandle(0)
         # Set the view range

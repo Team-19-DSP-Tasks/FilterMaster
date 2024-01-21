@@ -2,22 +2,14 @@ PRIORITY:
 =========
 1. Mouse
 2. All pass fine tune ->
-	-	Filters should not be removed from library [postponed]
-	-	Upon "choosing" any filter, its zero and pole
-		should be plotted in the z-plane
-	-	Upon "adding" any filter, its zero and pole
-		should be plotted in the z-plane
-	-	Plot each filter's phase response [not sure]
 	-	Toggle to see the cascaded filter phase response [not sure]
-	-	change the z-plane phase response: correct phase on applying or on adding and choosing [not sure]
-	-	corner case: if the user removed chosen filter,
-		its pole and zero get removed and its effect on cascading removed
+	-	Change the z-plane phase response: correct phase on applying or on adding and choosing [not sure]
+	-	If the user removed chosen filter,
+		its effect on cascading removed
+	-	Set range foe z-plane
 		
 3. Repetition
-4. Points slider/plotting
-5. By default, the user can plot zeros ->
-	-	add a default mode and that means you may want to consider
-		converting addPole and addZero to checkable buttons
+4. Plotting
 
 
 DONE:
@@ -25,6 +17,14 @@ DONE:
 1. Export filters and filtered data
 2. Removing single zero or pole
 3. Corner case: export filter: error: design is empty
+4. Upon "choosing" any filter, its zero and pole
+	should be plotted in the z-plane
+5. Upon "adding" any filter, its zero and pole
+	should be plotted in the z-plane
+6. Points slider
+7. By default, the user can plot zeros ->
+	add a default mode and that means you may want to consider
+	converting addPole and addZero to checkable buttons
 
 
 EXTRA:
@@ -38,7 +38,7 @@ EXTRA:
 8. Corner case: showing and hiding the dockwidgets
 9. Import filter by drag and drop
 10. Add conjugate to a single specific zero or pole
-
+11. Corner Case: addzero and addpole buttons checking
 
 NOT CONSIDERED WORK:
 ====================

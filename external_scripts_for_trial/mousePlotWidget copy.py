@@ -1,7 +1,7 @@
 import time
 
 import numpy as np
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore
 from pyqtgraph import PlotWidget
 
 
@@ -50,3 +50,9 @@ class CustomPlotWidget(PlotWidget):
         )
 
         return frequency
+
+
+"""
+signal_value = np.sqrt(pos.x()**2 + pos.y()**2) * 10
+self.data.append(signal_value)
+"""

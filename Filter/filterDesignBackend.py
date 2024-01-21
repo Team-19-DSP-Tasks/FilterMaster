@@ -102,7 +102,7 @@ class Backend:
         self.mouse_signal_frequencies = []
         # All-Pass Library
         self.user_inputs_values = []
-        self.idx = 10  # to accurately name the plot response of all-pass filter
+        self.idx = 9  # to accurately name the plot response of all-pass filter
         self.cascaded_filters = []  # includes the chosen filters to be cascaded
         self.all_pass_filters = [
             self.ui.allPass00,
@@ -353,21 +353,6 @@ class Backend:
                     for pole in self.poles_positions:
                         writer.writerow(["pole", pole.x(), pole.y()])
 
-    def export(self):
-        fileName, _ = QFileDialog.getSaveFileName(
-            None, "Save File", "", "CSV Files (*.csv)"
-        )
-        if fileName:
-            np.savetxt(fileName, self.filtered_data, delimiter=",")
-
-    def show_error(self, error_label, message):
-        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
-        error_label.setVisible(True)
-
-    def hide_error(self, error_label):
-        error_label.clear()
-        error_label.setVisible(False)
-
     # APPLICATION SIGNALS PLOTTING
     def import_signal(self):
         options = QFileDialog.Options()
@@ -432,6 +417,7 @@ class Backend:
     def update_filtration_rate(self):
         points_value = self.ui.filtration_slider.value()
         self.ui.speed_label.setText(f"Points: {points_value}")
+        # self.plotting_timer.setInterval(self.update_interval)
 
     def pause_play_action(self, checked):
         if checked:
@@ -456,6 +442,13 @@ class Backend:
         self.plotting_timer.start(self.update_interval)
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
+
+    def export(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            np.savetxt(fileName, self.filtered_data, delimiter=",")
 
     # ORGANIZING ALL-PASS lIBRARY
     def organize_library(self, scrollAreaLayout, filtersList):
@@ -485,10 +478,14 @@ class Backend:
         if not self.validate_a_value():
             self.user_inputs_values.append(value)
 
+            # Plot the phase response of the all-pass filter
+            plot_image_path = self.plot_all_pass_single_filter(value)
+
             # Instantiate a library button
             button_number = str(self.idx)
-            button_name = f"allPass{button_number}"
-            button = ProcessButton(value, self.idx)
+            button_name = f"allPass0{button_number}"
+            button_text = f"a = {value}"
+            button = ProcessButton(button_text, plot_image_path, value)
             # Set the button name
             button.setObjectName(button_name)
 
@@ -525,7 +522,7 @@ class Backend:
             self.show_error(self.ui.value_error, "'a' can't be 1")
             return True
         else:
-            for filter in self.all_pass_filters + self.cascaded_filters:
+            for filter in self.all_pass_filters:
                 if complex(value) == complex(filter.allPassValue):
                     self.ui.allPassEnteredValue.setStyleSheet(
                         "border: 1px solid #ef0f2e;"
@@ -537,6 +534,48 @@ class Backend:
         self.ui.allPassEnteredValue.setStyleSheet("")
         self.hide_error(self.ui.value_error)
         return False
+
+    def show_error(self, error_label, message):
+        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
+        error_label.setVisible(True)
+
+    def hide_error(self, error_label):
+        error_label.clear()
+        error_label.setVisible(False)
+
+    def plot_all_pass_single_filter(self, value):
+        a_complex = complex(value)
+
+        pole = a_complex
+        self.all_pass_poles.append(pole)
+        zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
+        self.all_pass_zeros.append(zero)
+
+        # Calculate frequency response using freqz
+        numerator, denominator = signal.zpk2tf(
+            self.all_pass_zeros, self.all_pass_poles, 1
+        )
+        all_pass_frequencies_values, all_pass_response_complex = signal.freqz(
+            numerator, denominator, worN=8000
+        )
+
+        self.all_pass_zeros_positions.append((zero.real, zero.imag))
+        self.all_pass_poles_positions.append((pole.real, pole.imag))
+
+        # Plot the phase response
+        plt.figure()
+        plt.plot(
+            all_pass_frequencies_values,
+            np.unwrap(np.angle(all_pass_response_complex)),
+            color="orange",
+            linewidth=5,
+        )
+        plt.axis("off")
+        # Save the plot as a PNG file
+        save_path = os.path.join(save_directory, f"phase_response_{self.idx}.png")
+        plt.savefig(save_path, transparent=True)
+        plt.clf()
+        return save_path
 
     def plot_all_pass_zeros_and_poles(self):
         if len(self.cascaded_filters) == 0:
@@ -578,7 +617,7 @@ class Backend:
 
     def capture_mouse_signal(self, frequency, y):
         self.original_data.append(y)
-        self.filtered_data = [0] + self.original_data
+        self.filtered_data = self.original_data
         self.mouse_signal_frequencies.append(frequency)
         self.apply_filter()
         # Update the real-time plots

@@ -93,6 +93,10 @@ class Backend:
         self.poles_conjugates_positions = []
         self.zeros_conjugates_positions = []
 
+        # For Z-Plane Filter Storing
+        self.numerator = None
+        self.denominator = None
+
         # For All-Pass zeros and poles plotting
         self.all_pass_zeros = []
         self.all_pass_poles = []
@@ -117,7 +121,6 @@ class Backend:
         self.update_interval = 50
         self.plotting_timer = QTimer()
         self.plotting_timer.timeout.connect(self.update_real_time_plots)
-        self.plotting_timer.start(self.update_interval)
         self.signal_index = 0
 
         # Data storing variables to be plotted: initially defined
@@ -265,8 +268,8 @@ class Backend:
         poles_array = np.array([complex(p.x(), p.y()) for p in self.poles_positions])
 
         # Calculate magnitude and phase responses
-        numerator, denominator = zpk2tf(zeros_array, poles_array, 1)
-        frequencies_values, response_complex = freqz(numerator, denominator)
+        self.numerator, self.denominator = zpk2tf(zeros_array, poles_array, 1)
+        frequencies_values, response_complex = freqz(self.numerator, self.denominator)
 
         # Update magnitude response plot
         self.mag_curve.setData(frequencies_values, 20 * np.log10(abs(response_complex)))
@@ -423,6 +426,7 @@ class Backend:
                 self.all_pass_filters.remove(button)
                 self.cascaded_filters.append(button)
                 self.add_all_pass_zeros_and_poles(button)
+                self.update_cascaded_phase_response()
         else:
             # Move the unchecked button from cascaded_filters to all_pass_filters
             if button in self.cascaded_filters:
@@ -434,6 +438,7 @@ class Backend:
                 self.remove_all_pass_zeros_and_poles(
                     self.all_pass_poles, button.pole.real, button.pole.imag
                 )
+                self.update_cascaded_phase_response()
 
         # Organize both libraries after the change
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
@@ -442,9 +447,9 @@ class Backend:
     def customize_all_pass_filter(self):
         # Get the value entered in the text field
         value = self.ui.allPassEnteredValue.text()
-
         if not self.validate_a_value():
             self.user_inputs_values.append(value)
+            self.ui.allPassEnteredValue.clear()
 
             # Instantiate a library button
             button_number = str(self.idx)
@@ -456,6 +461,7 @@ class Backend:
             # Add the button to the cascaded filters
             self.cascaded_filters.append(button)
             self.add_all_pass_zeros_and_poles(button)
+            self.update_cascaded_phase_response()
 
             # Set the button to checked initially
             button.setChecked(True)
@@ -512,6 +518,9 @@ class Backend:
                 self.ui.unitCirclePlot.removeItem(item)
                 items.remove(item)
 
+    def update_cascaded_phase_response(self):
+        pass
+
     def correct_phase(self):
         if len(self.cascaded_filters) == 0:
             self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
@@ -560,16 +569,36 @@ class Backend:
 
                 # Reset the signal index when a new signal is imported
                 self.signal_index = 0
-                self.update_plot()  # Use the new signal data for real-time plotting
+                self.update_real_time_plots()  # Use the new signal data for real-time plotting
                 self.plotting_timer.start(self.update_interval)
             except Exception as e:
                 print(f"Error loading the file: {e}")
 
     def update_real_time_plots(self):
-        pass
+        self.update_plot(self.ui.originalSignalPlot, self.original_data)
+        self.update_plot(self.ui.filteredSignalPlot, self.filtered_data)
 
-    def update_plot(self):
-        pass
+    def update_plot(self, plot_widget, signal_data):
+        plot_widget.clear()
+        self.signal_index += self.ui.filtration_slider.value()
+        if self.signal_index >= len(signal_data):
+            self.signal_index = 0
+
+        x_data = np.arange(self.signal_index)
+        y_data = signal_data[: self.signal_index]
+        y_max = max(y_data)
+        y_min = min(y_data)
+
+        plot_widget.plot(x=x_data, y=y_data, pen="orange")
+        plot_widget.setYRange(y_min, y_max, padding=0.1)
+
+        visible_range = (self.signal_index - 150, self.signal_index)
+        x_min_limit, x_max_limit = 0, self.signal_index + 0.1
+
+        plot_widget.setLimits(
+            xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
+        )
+        plot_widget.setXRange(*visible_range, padding=0)
 
     def update_filtration_rate(self):
         points_value = self.ui.filtration_slider.value()
@@ -588,11 +617,30 @@ class Backend:
             )
 
     def apply_filter(self):
-        pass
+        if len(self.poles) == 0 and len(self.zeros) == 0:
+            self.show_error(self.ui.emptyDesign, "Design is empty!")
+            return
+        self.filtered_data = signal.lfilter(
+            self.numerator, self.denominator, self.original_data
+        ).real
+        self.signal_index = 0
+        self.plotting_timer.start(self.update_interval)
+        if self.ui.pause_play_button.isChecked():
+            self.ui.pause_play_button.setChecked(False)
 
     # GENERATE SIGNAL BY MOUSE MOVEMENT
     def start_generating(self, checked):
-        pass
+        if checked:
+            self.plotting_timer.stop()
+            self.ui.originalSignalPlot.clear()
+            self.ui.filteredSignalPlot.clear()
+            self.original_data = []
+            self.filtered_data = []
+            self.ui.mousePad.position.connect(self.capture_mouse_signal)
+        else:
+            self.ui.mousePad.position.disconnect(self.capture_mouse_signal)
 
-    def capture_mouse_signal(self, frequency, y):
-        pass
+    def capture_mouse_signal(self, y):
+        self.original_data.append(y)
+        self.filtered_data.append(y)
+        self.update_real_time_plots()
