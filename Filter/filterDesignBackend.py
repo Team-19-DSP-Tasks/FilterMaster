@@ -8,11 +8,11 @@ import pyqtgraph as pg
 import wfdb
 from Classes.libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QAction, QFileDialog, QMenu
+from PyQt5.QtCore import QPointF, QTimer
+from PyQt5.QtWidgets import QFileDialog
 from pyqtgraph import TargetItem
 from scipy import signal
-from scipy.signal import freqz, zpk2tf
+from scipy.signal import freqz, lfilter, zpk2tf
 
 # A folder to store the phase response plots of all-pass filters
 save_directory = "Resources/All-Pass-Phase-Responses"
@@ -23,86 +23,115 @@ class Backend:
     def __init__(self, ui):
         self.ui = ui
 
-        # UI Objects Connections
+        # UI Objects to Methods Connections
+        ## === Creating === ##
         self.ui.addPole.clicked.connect(lambda: self.pole_mode())
         self.ui.addZero.clicked.connect(lambda: self.zero_mode())
 
+        ## === Removing === ##
         self.ui.removeAllPoles.clicked.connect(lambda: self.remove_poles())
         self.ui.removeAllZeros.clicked.connect(lambda: self.remove_zeros())
         self.ui.resetDesign.clicked.connect(lambda: self.reset_design())
 
+        ## === IMPORTING === ##
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
-        self.ui.exportSignal.clicked.connect(lambda: self.export())
+
+        ## === Exporting === ##
+        self.ui.exportSignal.clicked.connect(lambda: self.export_signal())
         self.ui.exportFilter.clicked.connect(lambda: self.export_filter())
-        self.ui.filtration_slider.valueChanged.connect(
-            lambda: self.update_filtration_rate()
+
+        ## === CUSTOM ALL-PASS CREATION === ##
+        self.ui.addAllPassFilter.clicked.connect(
+            lambda: self.customize_all_pass_filter()
         )
-        self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
-        self.ui.correctPhase.clicked.connect(
-            lambda: self.plot_all_pass_zeros_and_poles()
-        )
-        self.ui.addAllPassFilter.clicked.connect(lambda: self.add_all_pass_filter())
         self.ui.allPassEnteredValue.editingFinished.connect(
-            lambda: self.add_all_pass_filter()
+            lambda: self.customize_all_pass_filter()
         )
-        self.ui.pause_play_button.toggled.connect(
-            lambda checked: self.pause_play_action(checked)
-        )
-        self.ui.addConjugatesCheckBox.stateChanged.connect(
-            lambda: self.handle_conjugates()
-        )
+
+        ## === APPLYING FILTERS === ##
+        self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
+        self.ui.correctPhase.clicked.connect(lambda: self.correct_phase())
+
+        ## === Z-Plane Clicking === ##
         self.ui.unitCirclePlot.scene().sigMouseClicked.connect(
             lambda event: self.handle_unit_circle_click(event)
         )
+
+        ## === Conjugates === ##
+        self.ui.addConjugatesCheckBox.stateChanged.connect(
+            lambda: self.handle_conjugates()
+        )
+
+        ## === PAUSE AND PLAY === ##
+        self.ui.pause_play_button.toggled.connect(
+            lambda checked: self.pause_play_action(checked)
+        )
+        ## === CHANGE FILTRATION RATE === ##
+        self.ui.filtration_slider.valueChanged.connect(
+            lambda: self.update_filtration_rate()
+        )
+
+        ## === SIGNAL GENERATION === ##
         self.ui.generateSignal.toggled.connect(
             lambda checked: self.start_generating(checked)
         )
 
         # To control poles and zeros creation
+        self.ui.addZero.setChecked(True)
+        self.is_zero = True  # initially, add zeros
         self.is_pole = False
-        self.is_zero = False
+
         # To store poles and zeros TargetItems
         self.poles = []
         self.zeros = []
         self.poles_conjugates = []
         self.zeros_conjugates = []
+
         # To store positions of poles and zeros
         self.poles_positions = []
         self.zeros_positions = []
         self.poles_conjugates_positions = []
         self.zeros_conjugates_positions = []
-        # For Z-Plane Filter Calculations
-        self.zeros_array = None
-        self.poles_array = None
+
+        # For Z-Plane Filter Storing
         self.numerator = None
         self.denominator = None
+
         # For All-Pass zeros and poles plotting
         self.all_pass_zeros = []
         self.all_pass_poles = []
-        self.all_pass_zeros_positions = []
-        self.all_pass_poles_positions = []
+
         # For plotting magnitude and phase responses of Z-Plane Filter
         self.mag_curve = pg.PlotCurveItem(pen="b")
         self.phase_curve = pg.PlotCurveItem(pen="r")
+
         # Add PlotCurveItem to magnitude and phase response plots
         self.ui.magFrequencyResponse.addItem(self.mag_curve)
         self.ui.phaseFrequencyResponse.addItem(self.phase_curve)
+
+        # For plotting cascaded filter phase response
+        self.all_pass_phase_curve = pg.PlotCurveItem(pen="orange", linewidth=5)
+
+        # Add PlotCurveItem to magnitude and phase response plots
+        self.ui.allPassPhaseResponse.addItem(self.all_pass_phase_curve)
+
+        # Cascaded All-Pass Transfer Function
+        self.cascaded_numerator = None
+        self.cascaded_denominator = None
+
         # Variables for real time plotting
         self.update_interval = 50
         self.plotting_timer = QTimer()
         self.plotting_timer.timeout.connect(self.update_real_time_plots)
-        self.plotting_timer.start(self.update_interval)
         self.signal_index = 0
+
         # Data storing variables to be plotted: initially defined
-        self.original_data = np.loadtxt(
-            "Resources/signals/leadII_ecg_fibrillation.csv", delimiter=","
-        )
+        self.original_data = []
         self.filtered_data = self.original_data
-        # For Mouse Signal Generation
-        self.mouse_signal_frequencies = []
+
         # All-Pass Library
         self.user_inputs_values = []
-        self.idx = 9  # to accurately name the plot response of all-pass filter
+        self.idx = 10  # to accurately name the plot response of all-pass filter
         self.cascaded_filters = []  # includes the chosen filters to be cascaded
         self.all_pass_filters = [
             self.ui.allPass00,
@@ -124,38 +153,46 @@ class Backend:
         # Set the initial state for the library appearance
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
 
-    # =============================================================================================== #
-    # =========================================== Methods =========================================== #
-    # =============================================================================================== #
+    # HELPER FUNCTIONS TO AVOID CODE REPETITION
+    def add_target_item(self, pos, movable, symbol, color):
+        """
+        It just add A ZERO OR POLE TO THE UNIT CIRCLE.
+        """
+        item = TargetItem(
+            pos=pos,
+            size=10,
+            movable=movable,
+            symbol=symbol,
+            pen=pg.mkPen(color),
+        )
+        self.ui.unitCirclePlot.addItem(item)
+        return item
 
-    # CREATING ZEROS AND POLES
-    def pole_mode(self):
-        self.is_pole = True
-        self.is_zero = False
-
-    def zero_mode(self):
-        self.is_pole = False
-        self.is_zero = True
-
+    # MAIN FUNCTION FOR Z-PLANE
     def handle_unit_circle_click(self, event):
+        # Get the clicked position by mouse
         pos = self.ui.unitCirclePlot.mapToView(event.scenePos())
+
+        # Check which button is clicked to determine whether to add or remove
         if event.button() == QtCore.Qt.LeftButton:
             if self.is_pole:
-                self.draw_item(
+                item = self.add_target_item(pos, True, "x", "r")
+                self.store_drawn_item(
                     pos,
-                    "x",
-                    "r",
+                    item,
                     self.poles,
                     self.poles_positions,
+                    self.poles_conjugates,
                     self.poles_conjugates_positions,
                 )
             elif self.is_zero:
-                self.draw_item(
+                item = self.add_target_item(pos, True, "o", "g")
+                self.store_drawn_item(
                     pos,
-                    "o",
-                    "g",
+                    item,
                     self.zeros,
                     self.zeros_positions,
+                    self.zeros_conjugates,
                     self.zeros_conjugates_positions,
                 )
 
@@ -170,85 +207,80 @@ class Backend:
                     )
 
         elif event.button() == QtCore.Qt.RightButton:
-            self.create_context_menu(pos)
+            self.ui.remove_action.triggered.connect(lambda: self.remove_item(pos))
+            self.ui.context_menu.exec_(QtGui.QCursor.pos())
 
-    def draw_item(self, pos, symbol, color, items, positions_list, conjugates_list):
-        item = TargetItem(
-            pos=pos,
-            size=10,
-            movable=True,
-            symbol=symbol,
-            pen=pg.mkPen(color),
-        )
-        self.ui.unitCirclePlot.addItem(item)
+    # CREATING ZEROS AND POLES
+    def zero_mode(self):
+        self.is_pole = False
+        self.is_zero = True
+        self.ui.addPole.setChecked(False)
+
+    def pole_mode(self):
+        self.is_pole = True
+        self.is_zero = False
+        self.ui.addZero.setChecked(False)
+
+    def store_drawn_item(
+        self,
+        pos,
+        item,
+        items,
+        positions_list,
+        conjugates_list,
+        conjugates_positions_list,
+    ):
         items.append(item)
         positions_list.append(pos)
-        conjugates_list.append(pg.Point(pos.x(), -pos.y()))
+        conjugates_positions_list.append(pg.Point(pos.x(), -pos.y()))
         index = positions_list.index(pos)
         # Connect the sigPositionChanged signal to the update_positions function
-        item.sigPositionChanged.connect(lambda: self.update_positions(item, index))
+        item.sigPositionChanged.connect(
+            lambda: self.update_positions_on_moving(
+                item,
+                index,
+                positions_list,
+                conjugates_list,
+                conjugates_positions_list,
+            )
+        )
         # Update the magnitude and phase plotting if items are being moved
         self.update_responses()
 
-    def update_positions(self, item, index):
+    def update_positions_on_moving(
+        self,
+        item,
+        index,
+        positions_list,
+        conjugates_list,
+        conjugates_positions_list,
+    ):
         new_pos = item.pos()
-        if item in self.poles:
-            self.poles_positions[index] = new_pos
-            self.poles_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
-            if bool(self.poles_conjugates):
-                self.poles_conjugates[index].setPos(
-                    self.poles_conjugates_positions[index]
-                )
-        elif item in self.zeros:
-            self.zeros_positions[index] = new_pos
-            self.zeros_conjugates_positions[index] = pg.Point(new_pos.x(), -new_pos.y())
-            if bool(self.zeros_conjugates):
-                self.zeros_conjugates[index].setPos(
-                    self.zeros_conjugates_positions[index]
-                )
-        self.update_responses()
-
-    # REMOVE A SPECIFIC ZERO OR POLE
-    def create_context_menu(self, clicked_position):
-        # Context Menu to delete a specific zero or pole
-        self.context_menu = QMenu()
-        self.remove_action = QAction("Remove")
-        # Connect the signal before executing the context menu
-        self.remove_action.triggered.connect(lambda: self.remove_item(clicked_position))
-        self.context_menu.addAction(self.remove_action)
-        self.context_menu.exec_(QtGui.QCursor.pos())
-
-    def remove_item(self, clicked_position):
-        tolerance = 0.1
-        for pole_pos in self.poles_positions:
-            if (pole_pos - clicked_position).manhattanLength() < tolerance:
-                index = self.poles_positions.index(pole_pos)
-                item = self.poles[index]
-                self.ui.unitCirclePlot.removeItem(item)
-                self.poles.remove(item)
-                self.poles_positions.remove(pole_pos)
-                self.poles_conjugates_positions.remove(
-                    self.poles_conjugates_positions[index]
-                )
-                if self.ui.addConjugatesCheckBox.isChecked():
-                    self.ui.unitCirclePlot.removeItem(self.poles_conjugates[index])
-                    self.poles_conjugates.remove(self.poles_conjugates[index])
-
-        for zero_pos in self.zeros_positions:
-            if (zero_pos - clicked_position).manhattanLength() < tolerance:
-                index = self.zeros_positions.index(zero_pos)
-                item = self.zeros[index]
-                self.ui.unitCirclePlot.removeItem(item)
-                self.zeros.remove(item)
-                self.zeros_positions.remove(zero_pos)
-                self.zeros_conjugates_positions.remove(
-                    self.zeros_conjugates_positions[index]
-                )
-                if self.ui.addConjugatesCheckBox.isChecked():
-                    self.ui.unitCirclePlot.removeItem(self.zeros_conjugates[index])
-                    self.zeros_conjugates.remove(self.zeros_conjugates[index])
+        positions_list[index] = new_pos
+        conjugates_positions_list[index] = pg.Point(new_pos.x(), -new_pos.y())
+        if bool(conjugates_list):
+            conjugates_list[index].setPos(conjugates_positions_list[index])
 
         self.update_responses()
+
+    # PLOT MAGNITUDE AND PHASE RESPONSES
+    def update_responses(self):
+        # Get poles and zeros positions
+        zeros_array = np.array([complex(z.x(), z.y()) for z in self.zeros_positions])
+        poles_array = np.array([complex(p.x(), p.y()) for p in self.poles_positions])
+
+        # Calculate magnitude and phase responses
+        self.numerator, self.denominator = zpk2tf(zeros_array, poles_array, 1)
+        frequencies_values, response_complex = freqz(self.numerator, self.denominator)
+
+        # Update magnitude response plot
+        self.mag_curve.setData(frequencies_values, 20 * np.log10(abs(response_complex)))
+
+        # Update phase response plot
+        self.phase_curve.setData(frequencies_values, np.angle(response_complex))
+
+        if len(self.cascaded_filters) != 0:
+            self.correct_phase()
 
     # REMOVE All ZEROS/POLES AND RESET DESIGN
     def remove_poles(self):
@@ -289,22 +321,42 @@ class Backend:
             self.ui.unitCirclePlot.removeItem(item)
         self.update_responses()
 
-    # HANDLING CONJUGATES
-    def draw_conjugates(self, conjugates_positions, symbol, color):
-        for pos in conjugates_positions:
-            item = TargetItem(
-                size=10,
-                movable=False,
-                symbol=symbol,
-                pen=pg.mkPen(color),
-            )
-            item.setPos(pos)
-            self.ui.unitCirclePlot.addItem(item)
-            if symbol == "x":
-                self.poles_conjugates.append(item)
-            elif symbol == "o":
-                self.zeros_conjugates.append(item)
+    # REMOVE A SPECIFIC ZERO OR POLE
+    def remove_item_helper(
+        self, clicked_position, items, positions, conjugates, conjugates_positions
+    ):
+        tolerance = 0.1
+        for pos in positions:
+            if (pos - clicked_position).manhattanLength() < tolerance:
+                index = positions.index(pos)
+                item = items[index]
+                self.ui.unitCirclePlot.removeItem(item)
+                items.remove(item)
+                positions.remove(pos)
+                conjugates_positions.remove(conjugates_positions[index])
+                if self.ui.addConjugatesCheckBox.isChecked():
+                    self.ui.unitCirclePlot.removeItem(conjugates[index])
+                    conjugates.remove(conjugates[index])
 
+    def remove_item(self, clicked_position):
+        self.remove_item_helper(
+            clicked_position,
+            self.poles,
+            self.poles_positions,
+            self.poles_conjugates,
+            self.poles_conjugates_positions,
+        )
+        self.remove_item_helper(
+            clicked_position,
+            self.zeros,
+            self.zeros_positions,
+            self.zeros_conjugates,
+            self.zeros_conjugates_positions,
+        )
+
+        self.update_responses()
+
+    # HANDLING CONJUGATES
     def handle_conjugates(self):
         if self.ui.addConjugatesCheckBox.isChecked():
             self.draw_conjugates(self.poles_conjugates_positions, "x", "b")
@@ -314,25 +366,13 @@ class Backend:
             self.poles_conjugates.clear()
             self.zeros_conjugates.clear()
 
-    # PLOT MAGNITUDE AND PHASE RESPONSES
-    def update_responses(self):
-        # Get poles and zeros positions
-        self.zeros_array = np.array(
-            [complex(z.x(), z.y()) for z in self.zeros_positions]
-        )
-        self.poles_array = np.array(
-            [complex(p.x(), p.y()) for p in self.poles_positions]
-        )
-
-        # Calculate magnitude and phase responses
-        self.numerator, self.denominator = zpk2tf(self.zeros_array, self.poles_array, 1)
-        frequencies_values, response_complex = freqz(self.numerator, self.denominator)
-
-        # Update magnitude response plot
-        self.mag_curve.setData(frequencies_values, 20 * np.log10(abs(response_complex)))
-
-        # Update phase response plot
-        self.phase_curve.setData(frequencies_values, np.angle(response_complex))
+    def draw_conjugates(self, conjugates_positions, symbol, color):
+        for pos in conjugates_positions:
+            item = self.add_target_item(pos, False, symbol, color)
+            if symbol == "x":
+                self.poles_conjugates.append(item)
+            elif symbol == "o":
+                self.zeros_conjugates.append(item)
 
     # EXPORT THE DESIGNED FILTER
     def export_filter(self):
@@ -352,8 +392,200 @@ class Backend:
                     writer.writerow([])
                     for pole in self.poles_positions:
                         writer.writerow(["pole", pole.x(), pole.y()])
+                    writer.writerow([])
+                    for allpass_zero in self.all_pass_zeros:
+                        writer.writerow(
+                            [
+                                "allpass_zero",
+                                allpass_zero.pos().x(),
+                                allpass_zero.pos().y(),
+                            ]
+                        )
+                    writer.writerow([])
+                    for allpass_pole in self.all_pass_poles:
+                        writer.writerow(
+                            [
+                                "allpass_pole",
+                                allpass_pole.pos().x(),
+                                allpass_pole.pos().y(),
+                            ]
+                        )
 
-    # APPLICATION SIGNALS PLOTTING
+    # EXPORT THE FILTERED SIGNAL
+    def export_signal(self):
+        fileName, _ = QFileDialog.getSaveFileName(
+            None, "Save File", "", "CSV Files (*.csv)"
+        )
+        if fileName:
+            np.savetxt(fileName, self.filtered_data, delimiter=",")
+
+    # ORGANIZING ALL-PASS lIBRARY
+    def organize_library(self, scrollAreaLayout, filtersList):
+        for i, filter in enumerate(filtersList):
+            scrollAreaLayout.addWidget(filter, i // 3, i % 3)
+
+    def on_filter_chosen(self, checked, button):
+        if checked:
+            # Move the checked button from all_pass_filters to cascaded_filters
+            if button in self.all_pass_filters:
+                self.all_pass_filters.remove(button)
+                self.cascaded_filters.append(button)
+                self.add_all_pass_zeros_and_poles(button)
+                self.update_cascaded_phase_response()
+                self.update_z_plane_view()
+        else:
+            # Move the unchecked button from cascaded_filters to all_pass_filters
+            if button in self.cascaded_filters:
+                self.cascaded_filters.remove(button)
+                self.all_pass_filters.append(button)
+                self.remove_all_pass_zeros_and_poles(
+                    self.all_pass_zeros, button.zero.real, button.zero.imag
+                )
+                self.remove_all_pass_zeros_and_poles(
+                    self.all_pass_poles, button.pole.real, button.pole.imag
+                )
+                self.update_cascaded_phase_response()
+                self.update_z_plane_view()
+
+        # Organize both libraries after the change
+        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+
+    def customize_all_pass_filter(self):
+        # Get the value entered in the text field
+        value = self.ui.allPassEnteredValue.text()
+        if not self.validate_a_value():
+            self.user_inputs_values.append(value)
+            self.ui.allPassEnteredValue.clear()
+
+            # Instantiate a library button
+            button_number = str(self.idx)
+            button_name = f"allPass{button_number}"
+            button = ProcessButton(value, self.idx, self.ui.scrollAreaWidgetContents)
+            # Set the button name
+            button.setObjectName(button_name)
+
+            # Add the button to the cascaded filters
+            self.cascaded_filters.append(button)
+            self.add_all_pass_zeros_and_poles(button)
+            self.update_cascaded_phase_response()
+
+            # Set the button to checked initially
+            button.setChecked(True)
+
+            # Connect the button to the organizing library function
+            button.toggled.connect(
+                lambda checked, button=button: self.on_filter_chosen(checked, button)
+            )
+
+            # call the organize libraries function
+            self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+            self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+            # Increment the index in case the user adds another custom filter
+            self.idx += 1
+
+    def validate_a_value(self):
+        value = self.ui.allPassEnteredValue.text()
+
+        if value in self.user_inputs_values:
+            self.show_error(self.ui.value_error, "Filter was already added")
+            return True
+        elif value == "":
+            self.show_error(self.ui.value_error, "Enter a value")
+            return True
+        elif value == "0":
+            self.show_error(self.ui.value_error, "'a' can't be 0")
+            return True
+        elif value == "1":
+            self.show_error(self.ui.value_error, "'a' can't be 1")
+            return True
+        else:
+            for filter in self.all_pass_filters + self.cascaded_filters:
+                if complex(value) == complex(filter.allPassValue):
+                    self.show_error(self.ui.value_error, "Filter already exists")
+                    return True
+
+        # If no duplicate is found, clear the error message and reset the border
+        self.hide_error(self.ui.value_error)
+        return False
+
+    def add_all_pass_zeros_and_poles(self, button):
+        zero_item = self.add_target_item(
+            (button.zero.real, button.zero.imag), False, "o", "orange"
+        )
+        pole_item = self.add_target_item(
+            (button.pole.real, button.pole.imag), False, "x", "orange"
+        )
+        self.all_pass_zeros.append(zero_item)
+        self.all_pass_poles.append(pole_item)
+
+    def remove_all_pass_zeros_and_poles(self, items, real, imag):
+        for item in items:
+            if item.pos() == QPointF(real, imag):
+                self.ui.unitCirclePlot.removeItem(item)
+                items.remove(item)
+
+    def update_z_plane_view(self):
+        max_value = 0
+        for item in self.all_pass_zeros + self.all_pass_poles:
+            max_value = max(max_value, item.pos().x())
+            max_value = max(max_value, item.pos().y())
+
+        max_value += 0.2 # to make the plane visually appealing
+        self.ui.unitCirclePlot.setRange(
+            xRange=(-max_value, max_value), yRange=(-max_value, max_value)
+        )
+        self.ui.unitCirclePlot.setLimits(
+            xMin=-max_value, xMax=max_value, yMin=-max_value, yMax=max_value
+        )
+
+    def update_cascaded_phase_response(self):
+        self.cascaded_numerator = np.array([1.0])
+        self.cascaded_denominator = np.array([1.0])
+        for filter in self.cascaded_filters:
+            numerator, denominator = filter.get_transfer_function()
+            self.cascaded_numerator, self.cascaded_denominator = np.convolve(
+                self.cascaded_numerator, numerator
+            ), np.convolve(self.cascaded_denominator, denominator)
+
+        # Plot the phase response of the cascaded filter
+        cascade_frequencies, cascade_response = freqz(
+            self.cascaded_numerator, self.cascaded_denominator, worN=8000
+        )
+
+        self.all_pass_phase_curve.setData(
+            cascade_frequencies,
+            np.unwrap(np.angle(cascade_response)),
+        )
+
+    def correct_phase(self):
+        if len(self.cascaded_filters) == 0:
+            self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
+            return
+        else:
+            corrected_numerator, corrected_denominator = np.convolve(
+                self.cascaded_numerator, self.numerator
+            ), np.convolve(self.cascaded_denominator, self.denominator)
+            corrected_frequencies, corrected_response = freqz(
+                corrected_numerator, corrected_denominator, worN=8000
+            )
+            self.phase_curve.setData(
+                corrected_frequencies,
+                np.unwrap(np.angle(corrected_response)),
+            )
+
+    # VALIDATING INPUT & ERROR MESSAGES
+    def show_error(self, error_label, message):
+        self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
+        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
+        error_label.setVisible(True)
+
+    def hide_error(self, error_label):
+        self.ui.allPassEnteredValue.setStyleSheet("")
+        error_label.clear()
+        error_label.setVisible(False)
+
+    # APPLICATION SIGNALS Importing & PLOTTING
     def import_signal(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(
@@ -383,14 +615,14 @@ class Backend:
 
                 # Reset the signal index when a new signal is imported
                 self.signal_index = 0
-                self.update_plot()  # Use the new signal data for real-time plotting
+                self.update_real_time_plots()  # Use the new signal data for real-time plotting
                 self.plotting_timer.start(self.update_interval)
             except Exception as e:
                 print(f"Error loading the file: {e}")
 
     def update_real_time_plots(self):
-        self.update_plot(self.ui.originalApplicationSignal, self.original_data)
-        self.update_plot(self.ui.filteredSignal, self.filtered_data)
+        self.update_plot(self.ui.originalSignalPlot, self.original_data)
+        self.update_plot(self.ui.filteredSignalPlot, self.filtered_data)
 
     def update_plot(self, plot_widget, signal_data):
         plot_widget.clear()
@@ -417,7 +649,6 @@ class Backend:
     def update_filtration_rate(self):
         points_value = self.ui.filtration_slider.value()
         self.ui.speed_label.setText(f"Points: {points_value}")
-        # self.plotting_timer.setInterval(self.update_interval)
 
     def pause_play_action(self, checked):
         if checked:
@@ -443,182 +674,19 @@ class Backend:
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
 
-    def export(self):
-        fileName, _ = QFileDialog.getSaveFileName(
-            None, "Save File", "", "CSV Files (*.csv)"
-        )
-        if fileName:
-            np.savetxt(fileName, self.filtered_data, delimiter=",")
-
-    # ORGANIZING ALL-PASS lIBRARY
-    def organize_library(self, scrollAreaLayout, filtersList):
-        for i, filter in enumerate(filtersList):
-            scrollAreaLayout.addWidget(filter, i // 3, i % 3)
-
-    def on_filter_chosen(self, checked, button):
-        if checked:
-            # Move the checked button from all_pass_filters to cascaded_filters
-            if button in self.all_pass_filters:
-                self.all_pass_filters.remove(button)
-                self.cascaded_filters.append(button)
-        else:
-            # Move the unchecked button from cascaded_filters to all_pass_filters
-            if button in self.cascaded_filters:
-                self.cascaded_filters.remove(button)
-                self.all_pass_filters.append(button)
-
-        # Organize both libraries after the change
-        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
-        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
-
-    def add_all_pass_filter(self):
-        # Get the value entered in the text field
-        value = self.ui.allPassEnteredValue.text()
-
-        if not self.validate_a_value():
-            self.user_inputs_values.append(value)
-
-            # Plot the phase response of the all-pass filter
-            plot_image_path = self.plot_all_pass_single_filter(value)
-
-            # Instantiate a library button
-            button_number = str(self.idx)
-            button_name = f"allPass0{button_number}"
-            button_text = f"a = {value}"
-            button = ProcessButton(button_text, plot_image_path, value)
-            # Set the button name
-            button.setObjectName(button_name)
-
-            # Add the button to the cascaded filters
-            self.cascaded_filters.append(button)
-
-            # Set the button to checked initially
-            button.setChecked(True)
-
-            # Connect the button to the organizing library function
-            button.toggled.connect(
-                lambda checked, button=button: self.on_filter_chosen(checked, button)
-            )
-
-            # call the organize libraries function
-            self.organize_library(self.ui.gridLayout, self.all_pass_filters)
-            self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
-            # Increment the index in case the user adds another custom filter
-            self.idx += 1
-
-    def validate_a_value(self):
-        value = self.ui.allPassEnteredValue.text()
-
-        if value in self.user_inputs_values:
-            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
-            self.show_error(self.ui.value_error, "Filter was already added")
-            return True
-        elif value == "":
-            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
-            self.show_error(self.ui.value_error, "Enter a value")
-            return True
-        elif value == "1":
-            self.ui.allPassEnteredValue.setStyleSheet("border: 1px solid #ef0f2e;")
-            self.show_error(self.ui.value_error, "'a' can't be 1")
-            return True
-        else:
-            for filter in self.all_pass_filters:
-                if complex(value) == complex(filter.allPassValue):
-                    self.ui.allPassEnteredValue.setStyleSheet(
-                        "border: 1px solid #ef0f2e;"
-                    )
-                    self.show_error(self.ui.value_error, "Filter already exists")
-                    return True
-
-        # If no duplicate is found, clear the error message and reset the border
-        self.ui.allPassEnteredValue.setStyleSheet("")
-        self.hide_error(self.ui.value_error)
-        return False
-
-    def show_error(self, error_label, message):
-        error_label.setText(f'<font color="#ef0f2e">{message}</font>')
-        error_label.setVisible(True)
-
-    def hide_error(self, error_label):
-        error_label.clear()
-        error_label.setVisible(False)
-
-    def plot_all_pass_single_filter(self, value):
-        a_complex = complex(value)
-
-        pole = a_complex
-        self.all_pass_poles.append(pole)
-        zero = (1 / np.abs(a_complex)) * np.exp(1j * np.angle(a_complex))
-        self.all_pass_zeros.append(zero)
-
-        # Calculate frequency response using freqz
-        numerator, denominator = signal.zpk2tf(
-            self.all_pass_zeros, self.all_pass_poles, 1
-        )
-        all_pass_frequencies_values, all_pass_response_complex = signal.freqz(
-            numerator, denominator, worN=8000
-        )
-
-        self.all_pass_zeros_positions.append((zero.real, zero.imag))
-        self.all_pass_poles_positions.append((pole.real, pole.imag))
-
-        # Plot the phase response
-        plt.figure()
-        plt.plot(
-            all_pass_frequencies_values,
-            np.unwrap(np.angle(all_pass_response_complex)),
-            color="orange",
-            linewidth=5,
-        )
-        plt.axis("off")
-        # Save the plot as a PNG file
-        save_path = os.path.join(save_directory, f"phase_response_{self.idx}.png")
-        plt.savefig(save_path, transparent=True)
-        plt.clf()
-        return save_path
-
-    def plot_all_pass_zeros_and_poles(self):
-        if len(self.cascaded_filters) == 0:
-            self.show_error(self.ui.filterNotChosen, "Please, Pick a filter!")
-            return
-        else:
-            # Iterate over the zeros positions and plot them
-            for zero_position in self.all_pass_zeros_positions:
-                item = TargetItem(
-                    pos=zero_position,
-                    size=10,
-                    movable=False,
-                    symbol="o",
-                    pen=pg.mkPen("g"),
-                )
-                self.ui.unitCirclePlot.addItem(item)
-            # Iterate over the poles positions and plot them
-            for pole_position in self.all_pass_poles_positions:
-                item = TargetItem(
-                    pos=pole_position,
-                    size=10,
-                    movable=False,
-                    symbol="x",
-                    pen=pg.mkPen("r"),
-                )
-                self.ui.unitCirclePlot.addItem(item)
-
     # GENERATE SIGNAL BY MOUSE MOVEMENT
     def start_generating(self, checked):
         if checked:
             self.plotting_timer.stop()
-            self.ui.originalApplicationSignal.clear()
-            self.ui.filteredSignal.clear()
+            self.ui.originalSignalPlot.clear()
+            self.ui.filteredSignalPlot.clear()
             self.original_data = []
             self.filtered_data = []
-            self.ui.mousePad.frequencySignal.connect(self.capture_mouse_signal)
+            self.ui.mousePad.position.connect(self.capture_mouse_signal)
         else:
-            self.ui.mousePad.frequencySignal.disconnect(self.capture_mouse_signal)
+            self.ui.mousePad.position.disconnect(self.capture_mouse_signal)
 
-    def capture_mouse_signal(self, frequency, y):
+    def capture_mouse_signal(self, y):
         self.original_data.append(y)
-        self.filtered_data = self.original_data
-        self.mouse_signal_frequencies.append(frequency)
-        self.apply_filter()
-        # Update the real-time plots
+        self.filtered_data.append(y)
         self.update_real_time_plots()

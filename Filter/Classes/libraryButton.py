@@ -19,7 +19,12 @@ class ProcessButton(QPushButton):
         self.index = index
 
         # get the data you need
-        self.zero, self.pole = self.Calculate_zero_and_pole()
+        (
+            self.zero,
+            self.pole,
+            self.numerator,
+            self.denominator,
+        ) = self.Calculate_zero_and_pole()
         image_path = self.plot_response()
 
         # for appearance
@@ -27,8 +32,6 @@ class ProcessButton(QPushButton):
         self.name = f"a = {self.allPassValue}"
 
         # for calculating
-        self.numerator = None
-        self.denominator = None
         self.all_pass_frequencies_values = None
         self.all_pass_response_complex = None
 
@@ -56,12 +59,12 @@ class ProcessButton(QPushButton):
         poles.append(pole)
         zeros.append(zero)
 
-        self.numerator, self.denominator = zpk2tf(zeros, poles, 1)
+        numerator, denominator = zpk2tf(zeros, poles, 1)
         self.all_pass_frequencies_values, self.all_pass_response_complex = freqz(
-            self.numerator, self.denominator, worN=8000
+            numerator, denominator, worN=8000
         )
 
-        return zero, pole
+        return zero, pole, numerator, denominator
 
     def plot_response(self):
         plt.figure()
@@ -77,3 +80,6 @@ class ProcessButton(QPushButton):
         plt.savefig(save_path, transparent=True)
         plt.clf()
         return save_path
+
+    def get_transfer_function(self):
+        return self.numerator, self.denominator

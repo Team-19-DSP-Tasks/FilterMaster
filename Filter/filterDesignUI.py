@@ -14,7 +14,7 @@ import pyqtgraph as pg
 from Classes.CSVpickUpArea import CSVLabelArea
 from Classes.libraryButton import ProcessButton
 from Classes.mousePlotWidget import CustomPlotWidget
-from formatting import Backend
+from filterDesignBackend import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QRegExp
 from PyQt5.QtGui import QValidator
@@ -87,7 +87,7 @@ class Ui_FilterDesigner(object):
         )
         self.mousePadHorizontalLayout.addItem(spacerItem2)
         self.mousePadHorizontalLayout.addWidget(self.mousePadGroupBox)
-        self.mousePadHorizontalLayout.addWidget(self.csvViewer)
+        # self.mousePadHorizontalLayout.addWidget(self.csvViewer)
         self.mousePadHorizontalLayout.addItem(spacerItem3)
 
         self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.mousePadGroupBox)
@@ -297,8 +297,6 @@ class Ui_FilterDesigner(object):
         circle_roi.removeHandle(0)
         # Set the view range
         # self.unitCirclePlot.setMouseEnabled(x=False, y=False)
-        # self.unitCirclePlot.setRange(xRange=(-1, 1), yRange=(-1, 1))
-        # self.unitCirclePlot.setLimits(xMin=-1.1, xMax=1.1, yMin=-1.1, yMax=1.1)
 
         self.horizontalLayout_2.addWidget(self.unitCirclePlot)
 
