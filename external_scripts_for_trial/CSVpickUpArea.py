@@ -1,26 +1,7 @@
 import csv
 
-from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImageReader
-from PyQt5.QtWidgets import QLabel, QVBoxLayout, QWidget
-
-
-class CSVLabel(QLabel):
-    def __init__(self):
-        super().__init__()
-
-        self.setAlignment(Qt.AlignCenter)
-        self.setText("\n\n Drop CSV File Here \n\n")
-        self.setStyleSheet(
-            """
-            QLabel{
-                border: 4px dashed #aaa
-            }
-        """
-        )
-
-    def set_csv_content(self, content):
-        self.setText(content)
+from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
 
 class CSVLabelArea(QWidget):
@@ -30,9 +11,6 @@ class CSVLabelArea(QWidget):
         self.setAcceptDrops(True)
 
         mainLayout = QVBoxLayout()
-
-        self.csvViewer = CSVLabel()
-        mainLayout.addWidget(self.csvViewer)
 
         self.setLayout(mainLayout)
 
@@ -72,7 +50,6 @@ class CSVLabelArea(QWidget):
             # Ensure the CSV file is not empty
             try:
                 first_column = [row[0] for row in csv_reader if row]
-                print("First Column:", first_column)
-                self.csvViewer.set_csv_content("\n".join(first_column))
+                print(first_column)
             except IndexError:
                 print("Error: The CSV file has empty rows or no data.")

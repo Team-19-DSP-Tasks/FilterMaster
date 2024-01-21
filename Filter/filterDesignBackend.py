@@ -33,6 +33,7 @@ class Backend:
 
         ## === IMPORTING === ##
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
+        self.ui.zPlane_dock_widget.csvDropped.connect(self.import_filter)
 
         ## === Exporting === ##
         self.ui.exportSignal.clicked.connect(lambda: self.export_signal())
@@ -265,6 +266,29 @@ class Backend:
 
         self.update_responses()
 
+    def import_filter(self, zeros, poles, allpass_zeros, allpass_poles):
+        # Reset everything
+        self.reset_design()
+        for filter in self.cascaded_filters:
+            self.remove_all_pass_zeros_and_poles(
+                self.all_pass_zeros, filter.zero.real, filter.zero.imag
+            )
+            self.remove_all_pass_zeros_and_poles(
+                self.all_pass_poles, filter.pole.real, filter.pole.imag
+            )
+
+        # Plot the imported filters
+        self.zeros_positions = zeros
+        self.poles_positions = poles
+        allpass_zeros_positions = allpass_zeros
+        allpass_poles_positions = allpass_poles
+        for zero_pos in self.zeros_positions:
+            item = self.add_target_item(zero_pos, True, "o", "g")
+        for pole_pos in self.poles_positions:
+            item = self.add_target_item(pole_pos, True, "x", "r")
+
+        self.update_responses()
+
     # PLOT MAGNITUDE AND PHASE RESPONSES
     def update_responses(self):
         # Get poles and zeros positions
@@ -398,7 +422,7 @@ class Backend:
                     for allpass_zero in self.all_pass_zeros:
                         writer.writerow(
                             [
-                                "allpass_zero",
+                                "allpass zero",
                                 allpass_zero.pos().x(),
                                 allpass_zero.pos().y(),
                             ]
@@ -407,7 +431,7 @@ class Backend:
                     for allpass_pole in self.all_pass_poles:
                         writer.writerow(
                             [
-                                "allpass_pole",
+                                "allpass pole",
                                 allpass_pole.pos().x(),
                                 allpass_pole.pos().y(),
                             ]
@@ -645,7 +669,7 @@ class Backend:
         plot_widget.plot(x=x_data, y=y_data, pen="orange")
         plot_widget.setYRange(y_min, y_max, padding=0.1)
 
-        visible_range = (self.signal_index - 150, self.signal_index)
+        visible_range = (self.signal_index - 150, self.signal_index + 30)
         x_min_limit, x_max_limit = 0, self.signal_index + 0.1
 
         plot_widget.setLimits(
@@ -666,9 +690,10 @@ class Backend:
             )
         else:
             self.plotting_timer.start(self.update_interval)
-            self.applying_timer.start(
-                self.update_interval
-            )  # Also start the applying_timer
+            if len(self.poles) != 0 and len(self.zeros) != 0:
+                self.applying_timer.start(
+                    self.update_interval
+                )  # Also start the applying_timer
             self.ui.pause_play_button.setIcon(
                 QtGui.QIcon("Resources/Icons/pause_button.png")
             )

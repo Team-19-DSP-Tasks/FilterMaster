@@ -38,7 +38,7 @@ EXTRA:
 8. Corner case: showing and hiding the dockwidgets
 9. Import filter by drag and drop
 10. Add conjugate to a single specific zero or pole
-11. Corner Case: addzero and addpole buttons checking
+11. Fine Tune: addzero and addpole buttons checking
 
 NOT CONSIDERED WORK:
 ====================
