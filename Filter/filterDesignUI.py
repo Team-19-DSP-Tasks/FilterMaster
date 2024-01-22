@@ -448,11 +448,11 @@ class Ui_FilterDesigner(object):
         self.menuTools.addMenu(self.menuExamples)
 
         self.actionBandPass = QAction("Band-Pass", FilterDesigner)
-        self.acitonHighPass = QAction("High-Pass", FilterDesigner)
+        self.actionHighPass = QAction("High-Pass", FilterDesigner)
         self.actionLowPass = QAction("Low-Pass", FilterDesigner)
 
         self.menuExamples.addAction(self.actionBandPass)
-        self.menuExamples.addAction(self.acitonHighPass)
+        self.menuExamples.addAction(self.actionHighPass)
         self.menuExamples.addAction(self.actionLowPass)
 
         #### End Tools <3 ####
@@ -550,31 +550,31 @@ class Ui_FilterDesigner(object):
         self.speedHLayout = QtWidgets.QHBoxLayout()
 
         ### Start of speed slider
-        self.speed_label = QtWidgets.QLabel("Speed: 1")
-        self.speed_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        self.speed_slider.setFixedWidth(300)
-        self.speed_slider.setMinimum(1)
-        self.speed_slider.setMaximum(100)
-        self.speed_slider.setValue(1)
-        self.speed_slider.setTickInterval(1)
-        self.speed_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        self.label_min_2 = QtWidgets.QLabel(
-            str(self.speed_slider.minimum()), FilterDesigner
-        )
-        self.label_max_2 = QtWidgets.QLabel(
-            str(self.speed_slider.maximum()), FilterDesigner
-        )
-        self.label_min_2.setAlignment(QtCore.Qt.AlignLeft)
-        self.label_max_2.setAlignment(QtCore.Qt.AlignRight)
-        self.speedLabelsHorizontalLayout_2 = QtWidgets.QHBoxLayout()
-        self.speedLabelsHorizontalLayout_2.addWidget(self.label_min_2)
-        self.speedLabelsHorizontalLayout_2.addWidget(self.label_max_2)
-        self.speedControllerVerticalLayout_2 = QtWidgets.QVBoxLayout()
-        self.speedControllerVerticalLayout_2.addWidget(self.speed_label)
-        self.speedControllerVerticalLayout_2.addWidget(self.speed_slider)
-        self.speedControllerVerticalLayout_2.addLayout(
-            self.speedLabelsHorizontalLayout_2
-        )
+        # self.speed_label = QtWidgets.QLabel("Speed: 1")
+        # self.speed_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        # self.speed_slider.setFixedWidth(300)
+        # self.speed_slider.setMinimum(1)
+        # self.speed_slider.setMaximum(100)
+        # self.speed_slider.setValue(1)
+        # self.speed_slider.setTickInterval(1)
+        # self.speed_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        # self.label_min_2 = QtWidgets.QLabel(
+        #     str(self.speed_slider.minimum()), FilterDesigner
+        # )
+        # self.label_max_2 = QtWidgets.QLabel(
+        #     str(self.speed_slider.maximum()), FilterDesigner
+        # )
+        # self.label_min_2.setAlignment(QtCore.Qt.AlignLeft)
+        # self.label_max_2.setAlignment(QtCore.Qt.AlignRight)
+        # self.speedLabelsHorizontalLayout_2 = QtWidgets.QHBoxLayout()
+        # self.speedLabelsHorizontalLayout_2.addWidget(self.label_min_2)
+        # self.speedLabelsHorizontalLayout_2.addWidget(self.label_max_2)
+        # self.speedControllerVerticalLayout_2 = QtWidgets.QVBoxLayout()
+        # self.speedControllerVerticalLayout_2.addWidget(self.speed_label)
+        # self.speedControllerVerticalLayout_2.addWidget(self.speed_slider)
+        # self.speedControllerVerticalLayout_2.addLayout(
+        #     self.speedLabelsHorizontalLayout_2
+        # )
         ### End of speed slider
 
         self.speedHLayout.addItem(spacerItem4)

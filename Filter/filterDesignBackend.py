@@ -74,9 +74,6 @@ class Backend:
             lambda: self.update_filtration_rate()
         )
 
-        ## === CHANGE SPEED === ##
-        self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
-
         ## === SIGNAL GENERATION === ##
         self.ui.generateSignal.toggled.connect(
             lambda checked: self.start_generating(checked)
@@ -165,6 +162,24 @@ class Backend:
 
         # Set the initial state for the library appearance
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+
+        self.bandpass_zeros = []
+        self.highpass_zeros = []
+        self.lowpass_poles = []
+        self.bandpass_zeros.append(QtCore.QPointF(1, 0))
+        self.bandpass_zeros.append(QtCore.QPointF(-1, 0))
+        self.highpass_zeros.append(QtCore.QPointF(1, 0))
+        self.lowpass_poles.append(QtCore.QPointF(1, 0))
+
+        self.ui.actionHighPass.triggered.connect(
+            lambda: self.import_filter(self.highpass_zeros, [], [], [])
+        )
+        self.ui.actionLowPass.triggered.connect(
+            lambda: self.import_filter([], self.lowpass_poles, [], [])
+        )
+        self.ui.actionBandPass.triggered.connect(
+            lambda: self.import_filter(self.bandpass_zeros, [], [], [])
+        )
 
     # HELPER FUNCTIONS TO AVOID CODE REPETITION
     def add_target_item(self, pos, movable, symbol, color):
@@ -327,9 +342,6 @@ class Backend:
 
         # Update phase response plot
         self.phase_curve.setData(frequencies_values, np.angle(response_complex))
-
-        if len(self.cascaded_filters) != 0:
-            self.correct_phase()
 
     # REMOVE All ZEROS/POLES AND RESET DESIGN
     def remove_poles(self):
@@ -624,6 +636,7 @@ class Backend:
                 "Please, Pick a filter or make one!",
                 self.ui.correctPhase,
             )
+            self.update_responses(),
             return
         else:
             self.hide_error(self.ui.filterNotChosen)
@@ -770,7 +783,7 @@ class Backend:
                 self.ui.emptyDesign, "Design is empty!", self.ui.applyFilterButton
             )
             return
-
+        self.ui.generateSignal.setChecked(False)
         self.ui.filtration_slider.setValue(len(self.poles) + len(self.zeros))
 
         # Reset parameters
