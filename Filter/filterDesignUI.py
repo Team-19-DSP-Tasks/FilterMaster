@@ -549,39 +549,10 @@ class Ui_FilterDesigner(object):
         self.speedControllerVerticalLayout.addLayout(self.speedLabelsHorizontalLayout)
         self.speedHLayout = QtWidgets.QHBoxLayout()
 
-        ### Start of speed slider
-        # self.speed_label = QtWidgets.QLabel("Speed: 1")
-        # self.speed_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
-        # self.speed_slider.setFixedWidth(300)
-        # self.speed_slider.setMinimum(1)
-        # self.speed_slider.setMaximum(100)
-        # self.speed_slider.setValue(1)
-        # self.speed_slider.setTickInterval(1)
-        # self.speed_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
-        # self.label_min_2 = QtWidgets.QLabel(
-        #     str(self.speed_slider.minimum()), FilterDesigner
-        # )
-        # self.label_max_2 = QtWidgets.QLabel(
-        #     str(self.speed_slider.maximum()), FilterDesigner
-        # )
-        # self.label_min_2.setAlignment(QtCore.Qt.AlignLeft)
-        # self.label_max_2.setAlignment(QtCore.Qt.AlignRight)
-        # self.speedLabelsHorizontalLayout_2 = QtWidgets.QHBoxLayout()
-        # self.speedLabelsHorizontalLayout_2.addWidget(self.label_min_2)
-        # self.speedLabelsHorizontalLayout_2.addWidget(self.label_max_2)
-        # self.speedControllerVerticalLayout_2 = QtWidgets.QVBoxLayout()
-        # self.speedControllerVerticalLayout_2.addWidget(self.speed_label)
-        # self.speedControllerVerticalLayout_2.addWidget(self.speed_slider)
-        # self.speedControllerVerticalLayout_2.addLayout(
-        #     self.speedLabelsHorizontalLayout_2
-        # )
-        ### End of speed slider
-
         self.speedHLayout.addItem(spacerItem4)
         self.speedHLayout.addWidget(self.pause_play_button)
         self.speedHLayout.addWidget(self.resetSignal)
         self.speedHLayout.addLayout(self.speedControllerVerticalLayout)
-        # self.speedHLayout.addLayout(self.speedControllerVerticalLayout_2)
         self.speedHLayout.addItem(spacerItem5)
         self.speedHLayout.addWidget(self.exportSignal)
         self.verticalLayout_7.addLayout(self.speedHLayout)
@@ -589,6 +560,15 @@ class Ui_FilterDesigner(object):
         self.context_menu = QMenu()
         self.remove_action = QAction("Remove")
         self.context_menu.addAction(self.remove_action)
+
+        ### Examples Menu
+        self.bandpass_zeros = []
+        self.highpass_zeros = []
+        self.lowpass_poles = []
+        self.bandpass_zeros.append(QtCore.QPointF(1, 0))
+        self.bandpass_zeros.append(QtCore.QPointF(-1, 0))
+        self.highpass_zeros.append(QtCore.QPointF(1, 0))
+        self.lowpass_poles.append(QtCore.QPointF(1, 0))
 
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)

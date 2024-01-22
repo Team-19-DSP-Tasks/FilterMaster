@@ -56,6 +56,17 @@ class Backend:
             lambda event: self.handle_unit_circle_click(event)
         )
 
+        ## === Examples Menu Options === ##
+        self.ui.actionHighPass.triggered.connect(
+            lambda: self.import_filter(self.ui.highpass_zeros, [], [], [])
+        )
+        self.ui.actionLowPass.triggered.connect(
+            lambda: self.import_filter([], self.ui.lowpass_poles, [], [])
+        )
+        self.ui.actionBandPass.triggered.connect(
+            lambda: self.import_filter(self.ui.bandpass_zeros, [], [], [])
+        )
+
         ## === Conjugates === ##
         self.ui.addConjugatesCheckBox.stateChanged.connect(
             lambda: self.handle_conjugates()
@@ -162,24 +173,6 @@ class Backend:
 
         # Set the initial state for the library appearance
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
-
-        self.bandpass_zeros = []
-        self.highpass_zeros = []
-        self.lowpass_poles = []
-        self.bandpass_zeros.append(QtCore.QPointF(1, 0))
-        self.bandpass_zeros.append(QtCore.QPointF(-1, 0))
-        self.highpass_zeros.append(QtCore.QPointF(1, 0))
-        self.lowpass_poles.append(QtCore.QPointF(1, 0))
-
-        self.ui.actionHighPass.triggered.connect(
-            lambda: self.import_filter(self.highpass_zeros, [], [], [])
-        )
-        self.ui.actionLowPass.triggered.connect(
-            lambda: self.import_filter([], self.lowpass_poles, [], [])
-        )
-        self.ui.actionBandPass.triggered.connect(
-            lambda: self.import_filter(self.bandpass_zeros, [], [], [])
-        )
 
     # HELPER FUNCTIONS TO AVOID CODE REPETITION
     def add_target_item(self, pos, movable, symbol, color):
