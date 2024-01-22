@@ -292,8 +292,8 @@ class Ui_FilterDesigner(object):
         self.unitCirclePlot.hideAxis("left")
         self.mousePad.hideAxis("bottom")
         self.mousePad.hideAxis("left")
-        self.mousePad.setRange(xRange=(-50, 250), yRange=(-200, 200))
-        self.mousePad.setLimits(xMin=-50, xMax=250, yMin=-200, yMax=200)
+        # self.mousePad.setRange(xRange=(-50, 250), yRange=(-200, 200))
+        # self.mousePad.setLimits(xMin=-50, xMax=250, yMin=-200, yMax=400)
 
         circle_roi.removeHandle(0)
         # Set the view range
@@ -548,10 +548,40 @@ class Ui_FilterDesigner(object):
         self.speedControllerVerticalLayout.addWidget(self.filtration_slider)
         self.speedControllerVerticalLayout.addLayout(self.speedLabelsHorizontalLayout)
         self.speedHLayout = QtWidgets.QHBoxLayout()
+
+        ### Start of speed slider
+        self.speed_label = QtWidgets.QLabel("Speed: 1")
+        self.speed_slider = QtWidgets.QSlider(QtCore.Qt.Horizontal)
+        self.speed_slider.setFixedWidth(300)
+        self.speed_slider.setMinimum(1)
+        self.speed_slider.setMaximum(100)
+        self.speed_slider.setValue(1)
+        self.speed_slider.setTickInterval(1)
+        self.speed_slider.setTickPosition(QtWidgets.QSlider.TicksBelow)
+        self.label_min_2 = QtWidgets.QLabel(
+            str(self.speed_slider.minimum()), FilterDesigner
+        )
+        self.label_max_2 = QtWidgets.QLabel(
+            str(self.speed_slider.maximum()), FilterDesigner
+        )
+        self.label_min_2.setAlignment(QtCore.Qt.AlignLeft)
+        self.label_max_2.setAlignment(QtCore.Qt.AlignRight)
+        self.speedLabelsHorizontalLayout_2 = QtWidgets.QHBoxLayout()
+        self.speedLabelsHorizontalLayout_2.addWidget(self.label_min_2)
+        self.speedLabelsHorizontalLayout_2.addWidget(self.label_max_2)
+        self.speedControllerVerticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.speedControllerVerticalLayout_2.addWidget(self.speed_label)
+        self.speedControllerVerticalLayout_2.addWidget(self.speed_slider)
+        self.speedControllerVerticalLayout_2.addLayout(
+            self.speedLabelsHorizontalLayout_2
+        )
+        ### End of speed slider
+
         self.speedHLayout.addItem(spacerItem4)
         self.speedHLayout.addWidget(self.pause_play_button)
         self.speedHLayout.addWidget(self.resetSignal)
         self.speedHLayout.addLayout(self.speedControllerVerticalLayout)
+        # self.speedHLayout.addLayout(self.speedControllerVerticalLayout_2)
         self.speedHLayout.addItem(spacerItem5)
         self.speedHLayout.addWidget(self.exportSignal)
         self.verticalLayout_7.addLayout(self.speedHLayout)

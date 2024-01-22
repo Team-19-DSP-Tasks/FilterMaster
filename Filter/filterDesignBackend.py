@@ -74,6 +74,9 @@ class Backend:
             lambda: self.update_filtration_rate()
         )
 
+        ## === CHANGE SPEED === ##
+        self.ui.speed_slider.valueChanged.connect(lambda: self.update_speed())
+
         ## === SIGNAL GENERATION === ##
         self.ui.generateSignal.toggled.connect(
             lambda checked: self.start_generating(checked)
@@ -285,14 +288,27 @@ class Backend:
             )
 
         # Plot the imported filters
-        self.zeros_positions = zeros
-        self.poles_positions = poles
-        allpass_zeros_positions = allpass_zeros
-        allpass_poles_positions = allpass_poles
-        for zero_pos in self.zeros_positions:
+        for zero_pos in zeros:
             item = self.add_target_item(zero_pos, True, "o", "g")
-        for pole_pos in self.poles_positions:
+            self.store_drawn_item(
+                zero_pos,
+                item,
+                self.zeros,
+                self.zeros_positions,
+                self.zeros_conjugates,
+                self.zeros_conjugates_positions,
+            )
+        for pole_pos in poles:
             item = self.add_target_item(pole_pos, True, "x", "r")
+            self.store_drawn_item(
+                pole_pos,
+                item,
+                self.poles,
+                self.poles_positions,
+                self.poles_conjugates,
+                self.poles_conjugates_positions,
+            )
+        self.handle_conjugates()
 
         self.update_responses()
 
@@ -678,8 +694,9 @@ class Backend:
             self.ui.filtration_slider.value()
         )  # Increment by the value of the slider
         if self.signal_index >= len(signal_data):
-            self.signal_index = len(signal_data)  # Reset the signal index to 0
-            self.plotting_timer.stop()
+            self.signal_index = len(signal_data)
+            # self.signal_index = len(signal_data)  # Reset the signal index to 0
+            # self.plotting_timer.stop()
 
         x_data = np.arange(self.signal_index)
         y_data = signal_data[: self.signal_index]
@@ -731,10 +748,10 @@ class Backend:
         points = self.ui.filtration_slider.value()
         # chunk is the end of the slice
         chunk = self.slicing_idx + points
-        if chunk > len(self.original_data):
-            self.applying_timer.stop()
-            self.apply_filter()  # Restart the filtration and plotting
-            return
+        # if chunk > len(self.original_data):
+        #     self.applying_timer.stop()
+        #     self.apply_filter()  # Restart the filtration and plotting
+        #     return
         self.filtered_data = np.append(
             self.filtered_data,
             lfilter(
@@ -744,7 +761,7 @@ class Backend:
             ).real,
         )
 
-        self.update_real_time_plots()
+        # self.update_real_time_plots()
         self.slicing_idx += points
 
     def apply_filter(self):
@@ -762,7 +779,7 @@ class Backend:
         self.filtered_data = np.array([])
 
         # Restart timers
-        # self.plotting_timer.start(self.update_interval)
+        self.plotting_timer.start(self.update_interval)
         self.applying_timer.start(self.update_interval)
 
         if self.ui.pause_play_button.isChecked():
@@ -776,9 +793,9 @@ class Backend:
             self.ui.filteredSignalPlot.clear()
             self.original_data = []
             self.filtered_data = []
-            self.ui.mousePad.position.connect(self.capture_mouse_signal)
+            self.ui.mousePad.dataPoint.connect(self.capture_mouse_signal)
         else:
-            self.ui.mousePad.position.disconnect(self.capture_mouse_signal)
+            self.ui.mousePad.dataPoint.disconnect(self.capture_mouse_signal)
 
     def capture_mouse_signal(self, y):
         self.original_data.append(y)
