@@ -733,7 +733,7 @@ class Backend:
             )
         else:
             self.plotting_timer.start(self.update_interval)
-            if len(self.poles) != 0 and len(self.zeros) != 0:
+            if len(self.poles) != 0 or len(self.zeros) != 0:
                 self.applying_timer.start(
                     self.update_interval
                 )  # Also start the applying_timer
@@ -748,16 +748,13 @@ class Backend:
         self.ui.filteredSignalPlot.clear()
         self.signal_index = 0
         self.slicing_idx = 0
+        self.ui.pause_play_button.setChecked(False)
         self.plotting_timer.start(self.update_interval)
 
     def slice_data(self):
         points = self.ui.filtration_slider.value()
         # chunk is the end of the slice
         chunk = self.slicing_idx + points
-        # if chunk > len(self.original_data):
-        #     self.applying_timer.stop()
-        #     self.apply_filter()  # Restart the filtration and plotting
-        #     return
         self.filtered_data = np.append(
             self.filtered_data,
             lfilter(

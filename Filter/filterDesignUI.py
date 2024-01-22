@@ -47,13 +47,6 @@ class Ui_FilterDesigner(object):
         self.applicationGraphs.setObjectName("applicationGraphs")
         self.verticalLayout_7 = QtWidgets.QVBoxLayout(self.applicationGraphs)
         self.verticalLayout_7.setObjectName("verticalLayout_7")
-        self.filteredSignalPlot = PlotWidget(self.applicationGraphs)
-        self.filteredSignalPlot.setMinimumSize(QtCore.QSize(0, 0))
-        self.filteredSignalPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
-        self.filteredSignalPlot.setObjectName("filteredSignal")
-        self.filteredSignalPlot.setTitle("Filtered Signal")
-        self.filteredSignalPlot.setLabel("bottom", "time")
-        self.filteredSignalPlot.setLabel("left", "ampltiude")
         self.originalSignalPlot = PlotWidget(self.applicationGraphs)
         self.originalSignalPlot.setMinimumSize(QtCore.QSize(0, 0))
         self.originalSignalPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
@@ -61,16 +54,33 @@ class Ui_FilterDesigner(object):
         self.originalSignalPlot.setTitle("Original Signal")
         self.originalSignalPlot.setLabel("bottom", "time")
         self.originalSignalPlot.setLabel("left", "ampltiude")
+        self.filteredSignalPlot = PlotWidget(self.applicationGraphs)
+        self.filteredSignalPlot.setMinimumSize(QtCore.QSize(0, 0))
+        self.filteredSignalPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.filteredSignalPlot.setObjectName("filteredSignal")
+        self.filteredSignalPlot.setTitle("Filtered Signal")
+        self.filteredSignalPlot.setLabel("bottom", "time")
+        self.filteredSignalPlot.setLabel("left", "ampltiude")
+        self.correctedPhaseSignalPlot = PlotWidget(self.applicationGraphs)
+        self.correctedPhaseSignalPlot.setMinimumSize(QtCore.QSize(0, 0))
+        self.correctedPhaseSignalPlot.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        self.correctedPhaseSignalPlot.setObjectName("filteredSignal")
+        self.correctedPhaseSignalPlot.setTitle("Signal with Corrected Phase")
+        self.correctedPhaseSignalPlot.setLabel("bottom", "time")
+        self.correctedPhaseSignalPlot.setLabel("left", "ampltiude")
         self.verticalLayout_7.addWidget(self.originalSignalPlot)
         self.verticalLayout_7.addWidget(self.filteredSignalPlot)
+        self.verticalLayout_7.addWidget(self.correctedPhaseSignalPlot)
         self.verticalLayout_9.addWidget(self.applicationGraphs)
 
         self.filteredSignalPlot.setXLink(self.originalSignalPlot)
         self.filteredSignalPlot.setYLink(self.originalSignalPlot)
+        self.correctedPhaseSignalPlot.setYLink(self.originalSignalPlot)
+        self.correctedPhaseSignalPlot.setYLink(self.originalSignalPlot)
 
         self.mousePadGroupBox = QtWidgets.QGroupBox(self.centralwidget)
-        self.mousePadGroupBox.setMinimumSize(QtCore.QSize(250, 200))
-        self.mousePadGroupBox.setMaximumSize(QtCore.QSize(450, 400))
+        self.mousePadGroupBox.setMinimumSize(QtCore.QSize(0, 200))
+        self.mousePadGroupBox.setMaximumSize(QtCore.QSize(116777215, 200))
         font = QtGui.QFont()
         font.setFamily("Open Sans")
         font.setPointSize(12)
@@ -79,15 +89,15 @@ class Ui_FilterDesigner(object):
         self.mousePadGroupBox.setObjectName("mousePadGroupBox")
 
         self.mousePadHorizontalLayout = QtWidgets.QHBoxLayout()
-        spacerItem2 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
-        spacerItem3 = QtWidgets.QSpacerItem(
-            40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
-        )
-        self.mousePadHorizontalLayout.addItem(spacerItem2)
+        # spacerItem2 = QtWidgets.QSpacerItem(
+        #     40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        # )
+        # spacerItem3 = QtWidgets.QSpacerItem(
+        #     40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum
+        # )
+        # self.mousePadHorizontalLayout.addItem(spacerItem2)
         self.mousePadHorizontalLayout.addWidget(self.mousePadGroupBox)
-        self.mousePadHorizontalLayout.addItem(spacerItem3)
+        # self.mousePadHorizontalLayout.addItem(spacerItem3)
 
         self.verticalLayout_5 = QtWidgets.QVBoxLayout(self.mousePadGroupBox)
         self.verticalLayout_5.setObjectName("verticalLayout_5")
