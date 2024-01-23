@@ -140,10 +140,6 @@ class Backend:
         self.plotting_timer.timeout.connect(self.update_real_time_plots)
         self.signal_index = 0
 
-        self.slicing_idx = 0
-        self.applying_timer = QTimer()
-        # self.applying_timer.timeout.connect(self.slice_data)
-
         # Data storing variables to be plotted: initially defined
         self.original_data = []
         self.filtered_data = []
@@ -733,23 +729,17 @@ class Backend:
     def pause_play_action(self, checked):
         if checked:
             self.plotting_timer.stop()
-            self.applying_timer.stop()  # Also stop the applying_timer
             self.ui.pause_play_button.setIcon(
                 QtGui.QIcon("Resources/Icons/play_button.png")
             )
         else:
             self.plotting_timer.start(self.update_interval)
-            if len(self.poles) != 0 or len(self.zeros) != 0:
-                self.applying_timer.start(
-                    self.update_interval
-                )  # Also start the applying_timer
             self.ui.pause_play_button.setIcon(
                 QtGui.QIcon("Resources/Icons/pause_button.png")
             )
 
     def reset_signal(self):
         self.plotting_timer.stop()
-        self.applying_timer.stop()
         self.ui.originalSignalPlot.clear()
         self.ui.filteredSignalPlot.clear()
         self.signal_index = 0
