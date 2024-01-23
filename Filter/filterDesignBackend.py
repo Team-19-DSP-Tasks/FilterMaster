@@ -1,12 +1,13 @@
 import csv
 import os
+import time
 
 import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import wfdb
 from Classes.libraryButton import ProcessButton
-from PyQt5 import QtCore, QtGui
+from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QPointF, QTimer
 from PyQt5.QtWidgets import QFileDialog
 from pyqtgraph import TargetItem
@@ -141,11 +142,13 @@ class Backend:
 
         self.slicing_idx = 0
         self.applying_timer = QTimer()
-        self.applying_timer.timeout.connect(self.slice_data)
+        # self.applying_timer.timeout.connect(self.slice_data)
 
         # Data storing variables to be plotted: initially defined
         self.original_data = []
         self.filtered_data = []
+        self.y_max = 0
+        self.y_min = 0
 
         # Not to reset mouse signal
         self.mouse_signal = False
@@ -683,6 +686,9 @@ class Backend:
                 else:
                     pass
 
+                self.y_max = max(self.original_data)
+                self.y_min = min(self.original_data)
+
                 # Reset the signal index when a new signal is imported
                 self.signal_index = 0
                 self.update_real_time_plots()  # Use the new signal data for real-time plotting
@@ -706,17 +712,17 @@ class Backend:
 
         x_data = np.arange(self.signal_index)
         y_data = signal_data[: self.signal_index]
-        y_max = max(signal_data)
-        y_min = min(signal_data)
+        # y_max = max(signal_data)
+        # y_min = min(signal_data)
 
         plot_widget.plot(x=x_data, y=y_data, pen="orange")
-        plot_widget.setYRange(y_min, y_max, padding=0.1)
+        plot_widget.setYRange(self.y_min, self.y_max, padding=0.1)
 
         visible_range = (self.signal_index - 150, self.signal_index + 150)
         x_min_limit, x_max_limit = 0, self.signal_index + 0.1
 
         plot_widget.setLimits(
-            xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
+            xMin=x_min_limit, xMax=x_max_limit, yMin=self.y_min, yMax=self.y_max
         )
         plot_widget.setXRange(*visible_range, padding=0)
 
@@ -751,21 +757,68 @@ class Backend:
         self.ui.pause_play_button.setChecked(False)
         self.plotting_timer.start(self.update_interval)
 
-    def slice_data(self):
-        points = self.ui.filtration_slider.value()
-        # chunk is the end of the slice
-        chunk = self.slicing_idx + points
-        self.filtered_data = np.append(
-            self.filtered_data,
-            lfilter(
-                self.numerator,
-                self.denominator,
-                self.original_data[self.slicing_idx : chunk],
-            ).real,
-        )
+    # def slice_data(self):
+    #     points = self.ui.filtration_slider.value()
+    #     # chunk is the end of the slice
+    #     chunk = self.slicing_idx + points
+    #     self.filtered_data = np.append(
+    #         self.filtered_data,
+    #         lfilter(
+    #             self.numerator,
+    #             self.denominator,
+    #             self.original_data[self.slicing_idx : chunk],
+    #         ).real,
+    #     )
 
-        # self.update_real_time_plots()
-        self.slicing_idx += points
+    #     # self.update_real_time_plots()
+    #     self.slicing_idx += points
+
+    # def apply_filter(self):
+    #     if len(self.poles) == 0 and len(self.zeros) == 0:
+    #         self.show_error(
+    #             self.ui.emptyDesign, "Design is empty!", self.ui.applyFilterButton
+    #         )
+    #         return
+    #     self.ui.generateSignal.setChecked(False)
+    #     self.ui.filtration_slider.setValue(len(self.poles) + len(self.zeros))
+
+    #     # Reset parameters
+    #     self.signal_index = 0
+    #     self.slicing_idx = 0
+    #     self.filtered_data = np.array([])
+
+    #     # Restart timers
+    #     self.plotting_timer.start(self.update_interval)
+    #     self.applying_timer.start(self.update_interval)
+
+    #     if self.ui.pause_play_button.isChecked():
+    #         self.ui.pause_play_button.setChecked(False)
+
+    # def apply_filter(self):
+    #     if len(self.poles) == 0 and len(self.zeros) == 0:
+    #         self.show_error(
+    #             self.ui.emptyDesign, "Design is empty!", self.ui.applyFilterButton
+    #         )
+    #         return
+    #     self.ui.generateSignal.setChecked(False)
+    #     self.ui.filtration_slider.setValue(len(self.poles) + len(self.zeros))
+
+    #     # New Filtration
+    #     self.signal_index = 0
+    #     self.filtered_data = np.array([])
+    #     self.original_data = self.original_data
+    #     for n in range(len(self.original_data)):
+    #         self.filtered_data[n] = sum(
+    #             self.numerator
+    #             * self.original_data[(n - len(self.numerator) + 1) : (n + 1)][::-1]
+    #         ) - sum(
+    #             self.denominator[1:]
+    #             * self.original_data[(n - len(self.denominator) + 2) : (n + 1)][::-1]
+    #         )
+    #         self.plotting_timer.start(self.update_interval)
+
+    #     if self.ui.pause_play_button.isChecked():
+    #         self.ui.pause_play_button.setChecked(False)
 
     def apply_filter(self):
         if len(self.poles) == 0 and len(self.zeros) == 0:
@@ -773,17 +826,38 @@ class Backend:
                 self.ui.emptyDesign, "Design is empty!", self.ui.applyFilterButton
             )
             return
-        self.ui.generateSignal.setChecked(False)
-        self.ui.filtration_slider.setValue(len(self.poles) + len(self.zeros))
 
-        # Reset parameters
+        # Reset filtered_data
         self.signal_index = 0
-        self.slicing_idx = 0
-        self.filtered_data = np.array([])
+        self.filtered_data = np.zeros_like(self.original_data)
+        update_frequency = 10
+        # Apply the filter difference equation and update the plot in real-time
+        for n in range(len(self.original_data)):
+            x_n = self.original_data[n]
+            y_n = 0
 
-        # Restart timers
-        self.plotting_timer.start(self.update_interval)
-        self.applying_timer.start(self.update_interval)
+            # Compute the x terms
+            for k in range(len(self.numerator)):
+                if n - k >= 0:
+                    y_n += self.numerator[k] * x_n
+
+            # Compute the y terms
+            for k in range(1, len(self.denominator)):
+                if n - k >= 0:
+                    y_n -= self.denominator[k] * self.filtered_data[n - k]
+
+            # Compute the total output
+            y_n_real = y_n.real  # or np.real(y_n)
+            self.filtered_data[n] = y_n_real
+
+            # Update the plots every N iterations
+            if n % update_frequency == 0:
+                self.update_real_time_plots()
+                QtWidgets.QApplication.processEvents()
+
+            # Optionally, add a small delay for better visualization (not necessary)
+            # You can adjust the sleep duration based on your preference
+            time.sleep(0.01)
 
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
