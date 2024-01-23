@@ -1,15 +1,9 @@
 PRIORITY:
 =========
-1. Mouse
-2. All pass fine tune ->
-	-	Toggle to see the cascaded filter phase response [not sure]
-	-	Change the z-plane phase response: correct phase on applying or on adding and choosing [not sure]
-	-	If the user removed chosen filter,
-		its effect on cascading removed
-	-	Set range foe z-plane
-		
-3. Repetition
-4. Plotting
+1. Mouse Real time filtring
+2. Control the speed of filtrations
+3. Range of Y when filtring
+4. Pause and play fix when filtering or remove the button
 
 
 DONE:
@@ -28,20 +22,30 @@ DONE:
 8. Import filter by drag and drop
 9. Corner case: all pass filter exists in library but was moved to the cascaded, didn't check
 10. Corner case: showing and hiding the dockwidgets
+11. Mouse
+12. All pass fine tune ->
+	-	Change the z-plane phase response: correct phase on adding and choosing
+	-	If the user removed chosen filter,
+		it affects the cascaded filter
+	-	Set range for z-plane on choosing all pass filter
+13. Cleaned Repetition [Perfect]
+14. Plotting
+15. Import filter by drag and drop
+16. Zplane filters examples -> Though you can check why it generates a effectless warning
 
 
 EXTRA:
 ======
 1. Best practices: dictionaries
-2. Import filter by drag and drop
 3. UI revise colors and whole design
 4. 3D visualisation
 5. Save application
 10. Add conjugate to a single specific zero or pole
 11. Fine Tune: addzero and addpole buttons checking
-12. Zplane filters examples
+13. Add a quick button to remove all chosen all pass libraries
+14. Add a quick button to revert to imported data if mouse was chosen after you imported a data [History].
 
 NOT CONSIDERED WORK:
 ====================
-1. Lengthy data
-2. Prepare filters for Discussion
+1. Lengthy data [not necessary]
+2. Prepare filters for Discussion [After I made the examples, it is no problem <3]
