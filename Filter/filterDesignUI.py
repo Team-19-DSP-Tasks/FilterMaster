@@ -75,7 +75,7 @@ class Ui_FilterDesigner(object):
 
         self.filteredSignalPlot.setXLink(self.originalSignalPlot)
         self.filteredSignalPlot.setYLink(self.originalSignalPlot)
-        self.correctedPhaseSignalPlot.setYLink(self.originalSignalPlot)
+        self.correctedPhaseSignalPlot.setXLink(self.originalSignalPlot)
         self.correctedPhaseSignalPlot.setYLink(self.originalSignalPlot)
 
         self.mousePadGroupBox = QtWidgets.QGroupBox(self.centralwidget)

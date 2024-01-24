@@ -145,8 +145,6 @@ class Backend:
         self.original_data = []
         self.filtered_data = []
         self.corrected_phase_data = []
-        self.y_max = 0
-        self.y_min = 0
 
         # Not to reset mouse signal
         self.mouse_signal = False
@@ -732,9 +730,6 @@ class Backend:
                 else:
                     pass
 
-                self.y_max = max(self.original_data)
-                self.y_min = min(self.original_data)
-
                 # Reset the signal index when a new signal is imported
                 self.signal_index = 0
                 self.update_real_time_plots()  # Use the new signal data for real-time plotting
@@ -759,22 +754,20 @@ class Backend:
         )  # Increment by the value of the slider
         if self.signal_index >= len(signal_data):
             self.signal_index = len(signal_data)
-            # self.signal_index = len(signal_data)  # Reset the signal index to 0
-            # self.plotting_timer.stop()
 
         x_data = np.arange(self.signal_index)
         y_data = signal_data[: self.signal_index]
-        # y_max = max(signal_data)
-        # y_min = min(signal_data)
+        y_max = max(signal_data)
+        y_min = min(signal_data)
 
         plot_widget.plot(x=x_data, y=y_data, pen="orange")
-        plot_widget.setYRange(self.y_min, self.y_max, padding=0.1)
+        plot_widget.setYRange(y_min, y_max, padding=0.1)
 
         visible_range = (self.signal_index - 150, self.signal_index + 150)
         x_min_limit, x_max_limit = 0, self.signal_index + 0.1
 
         plot_widget.setLimits(
-            xMin=x_min_limit, xMax=x_max_limit, yMin=self.y_min, yMax=self.y_max
+            xMin=x_min_limit, xMax=x_max_limit, yMin=y_min, yMax=y_max
         )
         plot_widget.setXRange(*visible_range, padding=0)
 
@@ -811,7 +804,8 @@ class Backend:
             return
 
         # Reset the plotting and filtered_data
-        self.signal_index = 0
+        if not self.ui.generateSignal.isChecked():
+            self.signal_index = 0
         self.filtered_data = np.zeros_like(self.original_data)
         update_frequency = 10
 
@@ -859,7 +853,7 @@ class Backend:
 
     def capture_mouse_signal(self, y):
         self.original_data.append(y)
-        self.y_max = -100
-        self.y_min = 300
-        self.apply_filter()
+        self.filtered_data = lfilter(
+            self.numerator, self.denominator, self.original_data
+        ).real
         self.update_real_time_plots()
