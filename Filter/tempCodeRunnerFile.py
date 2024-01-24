@@ -1,0 +1,1 @@
+with open(path, "r") as file:

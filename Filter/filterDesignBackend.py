@@ -35,6 +35,7 @@ class Backend:
         ## === IMPORTING === ##
         self.ui.actionImport_Signal.triggered.connect(self.import_signal)
         self.ui.zPlane_dock_widget.csvDropped.connect(self.import_filter)
+        self.ui.importFilter.clicked.connect(self.import_filter_using_button)
 
         ## === Exporting === ##
         self.ui.exportSignal.clicked.connect(lambda: self.export_signal())
@@ -143,6 +144,7 @@ class Backend:
         # Data storing variables to be plotted: initially defined
         self.original_data = []
         self.filtered_data = []
+        self.corrected_phase_data = []
         self.y_max = 0
         self.y_min = 0
 
@@ -643,6 +645,11 @@ class Backend:
                 np.unwrap(np.angle(corrected_response)),
             )
 
+            self.corrected_phase_data = lfilter(
+                self.cascaded_numerator, self.cascaded_denominator, self.filtered_data
+            )
+            self.update_real_time_plots()
+
     # VALIDATING INPUT & ERROR MESSAGES
     def show_error(self, error_label, message, widget):
         widget.setStyleSheet("border: 1px solid orange;")
@@ -653,6 +660,47 @@ class Backend:
         self.ui.gainInput.setStyleSheet("")
         error_label.clear()
         error_label.setVisible(False)
+
+    # IMPORT fILTER
+    def import_filter_using_button(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(
+            None,
+            "Open Signal Files",
+            "",
+            "Signal Files (*.csv);;All Files (*)",
+            options=options,
+        )
+
+        if file_path:
+            try:
+                zero_tuples = []
+                pole_tuples = []
+                allpass_zero_tuples = []
+                allpass_pole_tuples = []
+                with open(file_path, "r") as file:
+                    reader = csv.reader(file)
+                    next(reader)
+                    # Extract the zeros and poles
+                    for row in reader:
+                        if len(row) != 0:
+                            x = float(row[1])
+                            y = float(row[2])
+                            if row[0] == "zero":
+                                zero_tuples.append(QtCore.QPointF(x, y))
+                            elif row[0] == "pole":
+                                pole_tuples.append(QtCore.QPointF(x, y))
+                            elif row[0] == "allpass zero":
+                                allpass_zero_tuples.append(QtCore.QPointF(x, y))
+                            elif row[0] == "allpass pole":
+                                allpass_pole_tuples.append(QtCore.QPointF(x, y))
+                        else:
+                            pass
+                self.import_filter(
+                    zero_tuples, pole_tuples, allpass_zero_tuples, allpass_pole_tuples
+                )
+            except Exception as e:
+                print(f"Error loading the file: {e}")
 
     # APPLICATION SIGNALS Importing & PLOTTING
     def import_signal(self):
@@ -695,6 +743,12 @@ class Backend:
     def update_real_time_plots(self):
         self.update_plot(self.ui.originalSignalPlot, self.original_data)
         self.update_plot(self.ui.filteredSignalPlot, self.filtered_data)
+        if self.ui.correctPhase.isChecked():
+            self.update_plot(
+                self.ui.correctedPhaseSignalPlot, self.corrected_phase_data
+            )
+        else:
+            self.ui.correctedPhaseSignalPlot.clear()
 
     def update_plot(self, plot_widget, signal_data):
         plot_widget.clear()
@@ -806,5 +860,4 @@ class Backend:
         self.y_max = -100
         self.y_min = 300
         self.apply_filter()
-        self.update_plot(self.ui.originalSignalPlot, [self.original_data[-1]])
-        self.update_plot(self.ui.filteredSignalPlot, [self.filtered_data[-1]])
+        self.update_real_time_plots()

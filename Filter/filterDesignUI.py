@@ -232,6 +232,7 @@ class Ui_FilterDesigner(object):
         self.verticalLayout_8.addWidget(self.allPassPhaseResponse)
         self.correctPhase = QtWidgets.QPushButton(self.dockWidgetContents_3)
         self.correctPhase.setObjectName("correctPhase")
+        self.correctPhase.setCheckable(True)
         self.verticalLayout_8.addWidget(self.correctPhase)
 
         ### label for error upon correcting phase
@@ -371,6 +372,13 @@ class Ui_FilterDesigner(object):
         self.emptyDesign.setStyleSheet("letter-spacing: 3px;")
         self.z_plane_VerticalLayout.addWidget(self.emptyDesign)
         self.emptyDesign.setVisible(False)
+        ###########################
+
+        ###### Import filter ######
+        self.importFilter = QtWidgets.QPushButton()
+        self.importFilter.setObjectName("import_filter")
+        self.z_plane_VerticalLayout.addLayout(self.horizontalLayout_2)
+        self.z_plane_VerticalLayout.addWidget(self.importFilter)
         ###########################
 
         self.verticalLayout_2.addWidget(self.filterDesignGroupBox)
@@ -652,6 +660,7 @@ class Ui_FilterDesigner(object):
         self.applyFilterButton.setText(_translate("FilterDesigner", "Apply Filter"))
         self.exportSignal.setText(_translate("FilterDesigner", "Export Filtered Data"))
         self.exportFilter.setText(_translate("FilterDesigner", "Export Filter"))
+        self.importFilter.setText(_translate("FilterDesigner", "Import Filter"))
         self.frequencyResponseGroupBox.setTitle(
             _translate("FilterDesigner", "Frequency Response")
         )

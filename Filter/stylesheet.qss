@@ -137,6 +137,18 @@ QPushButton:checked#addPole
     color: #ffffff;
 }
 
+QPushButton:checked#generateSignal
+{
+    background-color: #ffaa00;
+    color: #ffffff;
+}
+
+QPushButton:checked#correctPhase
+{
+    background-color: #ffaa00;
+    color: #ffffff;
+}
+
 QComboBox
 {
     selection-background-color: #ffaa00;
