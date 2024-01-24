@@ -647,7 +647,9 @@ class Backend:
 
             self.corrected_phase_data = lfilter(
                 self.cascaded_numerator, self.cascaded_denominator, self.filtered_data
-            )
+            ).real
+
+            self.corrected_phase_data *= -1
             self.update_real_time_plots()
 
     # VALIDATING INPUT & ERROR MESSAGES
