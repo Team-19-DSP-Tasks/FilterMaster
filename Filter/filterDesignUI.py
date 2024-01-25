@@ -149,7 +149,7 @@ class Ui_FilterDesigner(object):
 
         self.CascadedLabel = QtWidgets.QLabel(self.dockWidgetContents_3)
         font = QtGui.QFont()
-        font.setPointSize(10)
+        font.setPointSize(11)
         self.CascadedLabel.setFont(font)
         self.CascadedLabel.setAlignment(QtCore.Qt.AlignLeft)
         self.CascadedLabel.setObjectName("label")
@@ -167,6 +167,10 @@ class Ui_FilterDesigner(object):
         self.gridLayoutForCascaded.setObjectName("gridLayoutForCascaded")
         self.allPassCascaded.setWidget(self.scrollAreaWidgetContents_2)
         self.verticalLayout_8.addWidget(self.allPassCascaded)
+
+        self.removeAllPasses = QtWidgets.QPushButton(self.dockWidgetContents_3)
+        self.removeAllPasses.setObjectName("removeAllPasses")
+        self.verticalLayout_8.addWidget(self.removeAllPasses)
 
         self.allPassDesignGroupBox = QtWidgets.QGroupBox(self.dockWidgetContents_3)
         font = QtGui.QFont()
@@ -565,12 +569,23 @@ class Ui_FilterDesigner(object):
 
         ### Examples Menu
         self.bandpass_zeros = []
+        self.bandpass_zeros.append(QtCore.QPointF(0.95, 0))
+        self.bandpass_zeros.append(QtCore.QPointF(-0.95, 0))
+
+        self.bandpass_poles = []
+        self.bandpass_poles.append(QtCore.QPointF(0, 0))
+
         self.highpass_zeros = []
+        self.highpass_zeros.append(QtCore.QPointF(0.95, 0))
+
+        self.highpass_poles = []
+        self.highpass_poles.append(QtCore.QPointF(0.75, 0))
+
+        self.lowpass_zeros = []
+        self.lowpass_zeros.append(QtCore.QPointF(0, 0))
+
         self.lowpass_poles = []
-        self.bandpass_zeros.append(QtCore.QPointF(1, 0))
-        self.bandpass_zeros.append(QtCore.QPointF(-1, 0))
-        self.highpass_zeros.append(QtCore.QPointF(1, 0))
-        self.lowpass_poles.append(QtCore.QPointF(1, 0))
+        self.lowpass_poles.append(QtCore.QPointF(0.95, 0))
 
         self.retranslateUi(FilterDesigner)
         QtCore.QMetaObject.connectSlotsByName(FilterDesigner)
@@ -606,7 +621,10 @@ class Ui_FilterDesigner(object):
             _translate("FilterDesigner", "Generate signal by moving your mouse")
         )
         self.CascadedLabel.setText(
-            _translate("FilterDesigner", "Cascaded All-Pass Filters")
+            _translate("FilterDesigner", "Cascaded All-Pass Filters:")
+        )
+        self.removeAllPasses.setText(
+            _translate("FilterDesigner", "Remove all cascaded filters")
         )
         self.generateSignal.setText(_translate("FilterDesigner", "Generate Signal"))
         self.menuFile.setTitle(_translate("FilterDesigner", "File"))

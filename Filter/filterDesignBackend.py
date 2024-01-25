@@ -49,6 +49,9 @@ class Backend:
             lambda: self.customize_all_pass_filter()
         )
 
+        ## === REMOVE ALL ALL-PASSES ADDED === ##
+        self.ui.removeAllPasses.clicked.connect(self.remove_cascaded_filters)
+
         ## === APPLYING FILTERS === ##
         self.ui.applyFilterButton.clicked.connect(lambda: self.apply_filter())
         self.ui.correctPhase.clicked.connect(lambda: self.correct_phase())
@@ -60,13 +63,19 @@ class Backend:
 
         ## === Examples Menu Options === ##
         self.ui.actionHighPass.triggered.connect(
-            lambda: self.import_filter(self.ui.highpass_zeros, [], [], [])
+            lambda: self.import_filter(
+                self.ui.highpass_zeros, self.ui.highpass_poles, [], []
+            )
         )
         self.ui.actionLowPass.triggered.connect(
-            lambda: self.import_filter([], self.ui.lowpass_poles, [], [])
+            lambda: self.import_filter(
+                self.ui.lowpass_zeros, self.ui.lowpass_poles, [], []
+            )
         )
         self.ui.actionBandPass.triggered.connect(
-            lambda: self.import_filter(self.ui.bandpass_zeros, [], [], [])
+            lambda: self.import_filter(
+                self.ui.bandpass_zeros, self.ui.bandpass_poles, [], []
+            )
         )
 
         ## === Conjugates === ##
@@ -506,6 +515,18 @@ class Backend:
         self.organize_library(self.ui.gridLayout, self.all_pass_filters)
         self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
 
+    def remove_cascaded_filters(self):
+        # Create a copy of the cascaded_filters list to avoid modifying it while iterating
+        filters_to_remove = self.cascaded_filters.copy()
+
+        # Loop through the filters and uncheck them, which triggers the removal
+        for filter in filters_to_remove:
+            filter.setChecked(False)
+
+        # Update the libraries after removing the filters
+        self.organize_library(self.ui.gridLayout, self.all_pass_filters)
+        self.organize_library(self.ui.gridLayoutForCascaded, self.cascaded_filters)
+
     def customize_all_pass_filter(self):
         # Get the value entered in the text field
         value = self.ui.gainInput.text()
@@ -811,30 +832,33 @@ class Backend:
 
         # Apply the filter difference equation and update the plot in real-time
         for n in range(len(self.original_data)):
-            x_n = self.original_data[n]
-            y_n = 0
+            if not self.ui.pause_play_button.isChecked():
+                x_n = self.original_data[n]
+                y_n = 0
 
-            # Compute the x terms
-            for k in range(len(self.numerator)):
-                if n - k >= 0:
-                    y_n += self.numerator[k] * x_n
+                # Compute the x terms
+                for k in range(len(self.numerator)):
+                    if n - k >= 0:
+                        y_n += self.numerator[k] * x_n
 
-            # Compute the y terms
-            for k in range(1, len(self.denominator)):
-                if n - k >= 0:
-                    y_n -= self.denominator[k] * self.filtered_data[n - k]
+                # Compute the y terms
+                for k in range(1, len(self.denominator)):
+                    if n - k >= 0:
+                        y_n -= self.denominator[k] * self.filtered_data[n - k]
 
-            # Compute the total output
-            y_n_real = y_n.real  # or np.real(y_n)
-            self.filtered_data[n] = y_n_real
+                # Compute the total output
+                y_n_real = y_n.real  # or np.real(y_n)
+                self.filtered_data[n] = y_n_real
 
-            # Update the plots every N iterations
-            if n % update_frequency == 0:
-                self.update_real_time_plots()
-                QtWidgets.QApplication.processEvents()
+                # Update the plots every N iterations
+                if n % update_frequency == 0:
+                    self.update_real_time_plots()
+                    QtWidgets.QApplication.processEvents()
 
-            # Optionally, add a small delay for better visualization (not necessary)
-            time.sleep(0.01)
+                # Optionally, add a small delay for better visualization (not necessary)
+                time.sleep(0.01)
+            else:
+                n = n - 1
 
         if self.ui.pause_play_button.isChecked():
             self.ui.pause_play_button.setChecked(False)
