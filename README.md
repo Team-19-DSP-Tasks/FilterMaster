@@ -3,11 +3,13 @@
 Filter Designer makes digital filter design easy and practical, with features like real-time testing and a customizable library of filters. It is a user-friendly desktop app for creating digital filters. It also lets you see the filter's impact on a signal of your choice, along with fixing phase issues in this signal. This can be done by picking a ready-made filter from a library or creating your own.
 
 ## Table of Contents:
-- [Description](#Description)
+- [Description](#description)
 - [Project Features](#project-features)
 - [Quick Preview](#quick-preview)
-- [How to Run The Project](#run-the-project)
+- [Executing program](#executing-program)
+- [Help](#Help)
 - [Contributors](#contributors)
+- [License](#license)
 
 ## Description
 
@@ -19,13 +21,11 @@ Furthermore, Filter Designer empowers users to address phase distortions in impo
 
 The application encompasses additional features, which will be further detailed in the features section. Filter Designer is a user-friendly tool that prioritizes simplicity and practicality in digital filter design.
 
-## Getting Started
+## Project Features
 
-### Dependencies
+## Quick Preview
 
-### Installing
-
-### Executing program
+## Executing program
 
 ## Help
 
@@ -44,3 +44,7 @@ Gratitude goes out to all team members for their valuable contributions to this 
     <img src="https://avatars.githubusercontent.com/u/90231744?v=4" width="100px" alt="@M.Sayed">
   </a>
 </div>
+
+## License
+
+All rights reserved © 2023 to Team 19 - Systems & Biomedical Engineering, Cairo University (Class 2025)
