@@ -23,23 +23,32 @@ The application encompasses additional features, which will be further detailed 
 
 ## Project Features
 :white_check_mark: Full-Control on your filter design, You can
-- :white_check_mark: add Zeros & Poles to Z-Plane unit circle.
-- :white_check_mark: remove specific zero or pole
-- :white_check_mark: delete all zeros or all poles or reset the design in one click.
-- :white_check_mark: drag the zeros and poles and change their positions.
-- :white_check_mark: add conjugates of the existing zeros & poles
-:white_check_mark: Magnitude and Phase Responses visualization for the designed filter.
-:white_check_mark: Import the filter through a specifiec button or by dragging and droping the file on the unit circle.
-:white_check_mark: Export the designed filter as a CSV file
-:white_check_mark: Examples of filters Provided in the Tools Menu
+- :heavy_check_mark: add Zeros & Poles to Z-Plane unit circle.
+- :heavy_check_mark: remove specific zero or pole
+- :heavy_check_mark: delete all zeros or all poles or reset the design in one click.
+- :heavy_check_mark: drag the zeros and poles and change their positions
+- :heavy_check_mark: add conjugates of the existing zeros & poles
+- :heavy_check_mark: visualize the magnitude and phase response of your designed filter
+- :heavy_check_mark: check filter examples from the "Tools" menu
+- :heavy_check_mark: import a filter through a specifiec button or by dragging and dropping the file on the unit circle
+- :heavy_check_mark: export the designed filter as a CSV file
+
 :white_check_mark: Import and plot a signal data
+
 :white_check_mark: Generate a signal data by your mouse movement in a specified area
+
 :white_check_mark: Apply the designed filter on your signal
-:white_check_mark: Pause/Play/Reset the realtime plotting and filteration of your signal
+
 :white_check_mark: Control the rate of the filtered points per sec
+
+:white_check_mark: Pause/Play/Reset the realtime plotting and filteration of your signal
+
 :white_check_mark: Export the filtered data
-:white_check_mark: Correct the phase distortion using the provided all-pass library
+
+:white_check_mark: Correct the phase distortion using the provided all-pass filters library
+
 :white_check_mark: Customize an all-pass filter and integrate it into the library
+
 :white_check_mark: Visualize the cascaded all pass filteres phase response and apply it on the signal
 
 ## Quick Preview
