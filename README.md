@@ -23,15 +23,15 @@ The application encompasses additional features, which will be further detailed 
 
 ## Project Features
 :white_check_mark: Full-Control on your filter design, You can
-- :heavy_check_mark: add Zeros & Poles to Z-Plane unit circle.
-- :heavy_check_mark: remove specific zero or pole
-- :heavy_check_mark: delete all zeros or all poles or reset the design in one click.
-- :heavy_check_mark: drag the zeros and poles and change their positions
-- :heavy_check_mark: add conjugates of the existing zeros & poles
-- :heavy_check_mark: visualize the magnitude and phase response of your designed filter
-- :heavy_check_mark: check filter examples from the "Tools" menu
-- :heavy_check_mark: import a filter through a specifiec button or by dragging and dropping the file on the unit circle
-- :heavy_check_mark: export the designed filter as a CSV file
+  :heavy_check_mark: add Zeros & Poles to Z-Plane unit circle.
+  :heavy_check_mark: remove specific zero or pole
+  :heavy_check_mark: delete all zeros or all poles or reset the design in one click.
+  :heavy_check_mark: drag the zeros and poles and change their positions
+  :heavy_check_mark: add conjugates of the existing zeros & poles
+  :heavy_check_mark: visualize the magnitude and phase response of your designed filter
+  :heavy_check_mark: check filter examples from the "Tools" menu
+  :heavy_check_mark: import a filter through a specifiec button or by dragging and dropping the file on the unit circle
+  :heavy_check_mark: export the designed filter as a CSV file
 
 :white_check_mark: Import and plot a signal data
 
