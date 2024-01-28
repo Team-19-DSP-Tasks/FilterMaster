@@ -67,7 +67,7 @@ The application encompasses additional features, which will be further detailed 
 ## Executing program
 
 To be able to use our app, you can simply follow these steps:
-1. Install Python3 on your device. You can download it from </a href="https://www.python.org/downloads/">Here<a>.
+1. Install Python3 on your device. You can download it from <a href="https://www.python.org/downloads/">Here</a>.
 2. Install the required packages by the following command.
 ```
 pip install -r requirements.txt
