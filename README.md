@@ -29,6 +29,8 @@ The application encompasses additional features, which will be further detailed 
 
 ## Help
 
+If you encounter any issues or have questions, feel free to reach out.
+
 ## Contributors
 
 Gratitude goes out to all team members for their valuable contributions to this project.
