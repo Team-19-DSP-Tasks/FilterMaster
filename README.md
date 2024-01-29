@@ -86,8 +86,8 @@ Gratitude goes out to all team members for their valuable contributions to this 
   <a href="https://github.com/cln-Kafka">
     <img src="https://avatars.githubusercontent.com/u/100665578?v=4" width="100px" alt="@Kareem Noureddine">
   </a>
-  <a href="https://github.com/1MuhammadSami1">
-    <img src="https://avatars.githubusercontent.com/u/139786587?v=4" width="100px" alt="@M.Sami">
+  <a href="https://github.com/MuhammadSamiAhmad">
+    <img src="https://avatars.githubusercontent.com/u/101589634?v=4" width="100px" alt="@M.Sami">
   </a>
   <a href="https://github.com/MohamedSayedDiab">
     <img src="https://avatars.githubusercontent.com/u/90231744?v=4" width="100px" alt="@M.Sayed">
