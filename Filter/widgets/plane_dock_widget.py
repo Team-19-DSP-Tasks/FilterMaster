@@ -4,12 +4,12 @@ from PyQt5.QtCore import QPointF, pyqtSignal
 from PyQt5.QtWidgets import QDockWidget
 
 
-class ZPlaneDockWidget(QDockWidget):
+class PlaneDockWidget(QDockWidget):
     # Set a signal to be able to plot the filter once dropped
     csvDropped = pyqtSignal(list, list, list, list)
 
     def __init__(self, parent=None):
-        super(ZPlaneDockWidget, self).__init__(parent)
+        super(PlaneDockWidget, self).__init__(parent)
         self.setAcceptDrops(True)
         self.zero_tuples = []
         self.pole_tuples = []

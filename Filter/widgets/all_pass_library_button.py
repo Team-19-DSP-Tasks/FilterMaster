@@ -11,9 +11,9 @@ save_directory = "Resources/All-Pass-Phase-Responses"
 os.makedirs(save_directory, exist_ok=True)
 
 
-class ProcessButton(QPushButton):
+class AllPassProcessButton(QPushButton):
     def __init__(self, allPassValue, index, parent=None):
-        super(ProcessButton, self).__init__(parent)
+        super(AllPassProcessButton, self).__init__(parent)
 
         self.allPassValue = allPassValue
         self.index = index

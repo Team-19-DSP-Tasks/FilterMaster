@@ -3,15 +3,14 @@ import webbrowser
 
 import icons as icons
 import pyqtgraph as pg
-from Classes.libraryButton import ProcessButton
-from Classes.mousePlotWidget import CustomPlotWidget
-from Classes.ZDockWidget import ZPlaneDockWidget
 from filterDesignBackend import Backend
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import QRegExp
-from PyQt5.QtGui import QValidator
 from PyQt5.QtWidgets import QAction, QMenu
 from pyqtgraph import PlotWidget
+from widgets.all_pass_library_button import AllPassProcessButton
+from widgets.mouse_plot_widget import MousePlotWidget
+from widgets.plane_dock_widget import PlaneDockWidget
+from widgets.validator import CustomValidator
 
 
 class Ui_FilterDesigner(object):
@@ -92,7 +91,7 @@ class Ui_FilterDesigner(object):
         self.label.setAlignment(QtCore.Qt.AlignCenter)
         self.label.setObjectName("label")
         self.verticalLayout_5.addWidget(self.label)
-        self.mousePad = CustomPlotWidget(self.mousePadGroupBox)
+        self.mousePad = MousePlotWidget(self.mousePadGroupBox)
         self.mousePad.setMinimumSize(QtCore.QSize(0, 0))
         self.mousePad.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.mousePad.setObjectName("mousePad")
@@ -231,7 +230,7 @@ class Ui_FilterDesigner(object):
 
         self.allPassLibrary.setWidget(self.dockWidgetContents_3)
         FilterDesigner.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.allPassLibrary)
-        self.zPlane_dock_widget = ZPlaneDockWidget(FilterDesigner)
+        self.zPlane_dock_widget = PlaneDockWidget(FilterDesigner)
         self.zPlane_dock_widget.setObjectName("dockWidget_3")
         self.dockWidgetContents_4 = QtWidgets.QWidget()
         self.dockWidgetContents_4.setObjectName("dockWidgetContents_4")
@@ -467,47 +466,47 @@ class Ui_FilterDesigner(object):
         self.actionOpen_Docs.triggered.connect(self.open_documentation)
         self.menuHelp.addAction(self.actionOpen_Docs)
 
-        self.allPass00 = ProcessButton(
+        self.allPass00 = AllPassProcessButton(
             0.7,
             1,
             self.scrollAreaWidgetContents,
         )
-        self.allPass01 = ProcessButton(
+        self.allPass01 = AllPassProcessButton(
             1 + 2j,
             2,
             self.scrollAreaWidgetContents,
         )
-        self.allPass02 = ProcessButton(
+        self.allPass02 = AllPassProcessButton(
             0.3 + 0.2j,
             3,
             self.scrollAreaWidgetContents,
         )
-        self.allPass03 = ProcessButton(
+        self.allPass03 = AllPassProcessButton(
             1.5j,
             4,
             self.scrollAreaWidgetContents,
         )
-        self.allPass04 = ProcessButton(
+        self.allPass04 = AllPassProcessButton(
             5 + 1j,
             5,
             self.scrollAreaWidgetContents,
         )
-        self.allPass05 = ProcessButton(
+        self.allPass05 = AllPassProcessButton(
             -0.9,
             6,
             self.scrollAreaWidgetContents,
         )
-        self.allPass06 = ProcessButton(
+        self.allPass06 = AllPassProcessButton(
             1.2,
             7,
             self.scrollAreaWidgetContents,
         )
-        self.allPass07 = ProcessButton(
+        self.allPass07 = AllPassProcessButton(
             3,
             8,
             self.scrollAreaWidgetContents,
         )
-        self.allPass08 = ProcessButton(
+        self.allPass08 = AllPassProcessButton(
             0.2,
             9,
             self.scrollAreaWidgetContents,
@@ -668,22 +667,6 @@ class Ui_FilterDesigner(object):
         )
         self.actionImport_Signal.setText(_translate("FilterDesigner", "Import Signal"))
         self.actionExit.setText(_translate("FilterDesigner", "Exit"))
-
-
-class CustomValidator(QValidator):
-    def __init__(self, parent=None):
-        super(CustomValidator, self).__init__(parent)
-        self.regex = QRegExp("[0-9j+-.]+")
-
-    def validate(self, input_str, pos):
-        if pos == 0 and input_str == "":
-            # Allow deleting the first character
-            return QValidator.Acceptable, input_str, pos
-
-        if self.regex.exactMatch(input_str):
-            return QValidator.Acceptable, input_str, pos
-        else:
-            return QValidator.Invalid, input_str, pos
 
 
 if __name__ == "__main__":

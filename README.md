@@ -1,6 +1,12 @@
-# Filter Designer
+# FilterMaster
 
-Filter Designer makes digital filter design easy and practical, with features like real-time testing and a customizable library of filters. It is a user-friendly desktop app for creating digital filters. It also lets you see the filter's impact on a signal of your choice, along with fixing phase issues in this signal. This can be done by picking a ready-made filter from a library or creating your own.
+FilterMaster makes digital filter design easy and practical, with features like real-time testing and a customizable library of filters. It is a user-friendly desktop app for creating digital filters. It also lets you see the filter's impact on a signal of your choice, along with fixing phase issues in this signal. This can be done by picking a ready-made filter from a library or creating your own.
+
+<div>
+  <a href="README_Resources/App_UI.jpg">
+    <img src="README_Resources/App_UI.jpg" alt="FilterMaster_UI_Preview"  width="" height="">
+  </a>
+</div>
 
 ## Table of Contents:
 - [Description](#description)
@@ -13,13 +19,13 @@ Filter Designer makes digital filter design easy and practical, with features li
 
 ## Description
 
-Filter Designer is a desktop application designed to streamline the creation of digital filters in a user-friendly manner. Users can easily define filter characteristics by specifying the coordinates of zeros and poles. The application provides visualizations of the filter's magnitude and phase response, offering valuable insights into its behavior.
+FilterMaster is a desktop application designed to streamline the creation of digital filters in a user-friendly manner. Users can easily define filter characteristics by specifying the coordinates of zeros and poles. The application provides visualizations of the filter's magnitude and phase response, offering valuable insights into its behavior.
 
 A notable feature is the real-time filtering capability, where users can observe the immediate impact of their filter design on a dynamically generated signal. The application includes an independent mouse area, allowing users to translate their mouse movements into a plotted signal. The real-time filtration process then dynamically applies the designed filter to this mouse-generated signal. Additionally, users have the option to import their own signal data from their computer.
 
-Furthermore, Filter Designer empowers users to address phase distortions in imported signals, providing a straightforward solution for fine-tuning signal phases. Users can seamlessly resolve phase distortion issues by selecting an all-pass filter from a predefined library or customize an all-pass filter within the application. Notably, any custom filters created by users are seamlessly integrated into the library, eliminating the need to re-add them in future sessions.
+Furthermore, FilterMaster empowers users to address phase distortions in imported signals, providing a straightforward solution for fine-tuning signal phases. Users can seamlessly resolve phase distortion issues by selecting an all-pass filter from a predefined library or customize an all-pass filter within the application. Notably, any custom filters created by users are seamlessly integrated into the library, eliminating the need to re-add them in future sessions.
 
-The application encompasses additional features, which will be further detailed in the features section. Filter Designer is a user-friendly tool that prioritizes simplicity and practicality in digital filter design.
+The application encompasses additional features, which will be further detailed in the features section. FilterMaster is a user-friendly tool that prioritizes simplicity and practicality in digital filter design.
 
 ## Project Features
 :white_check_mark: **Full-Control on your filter design, You can**
@@ -68,8 +74,13 @@ The application encompasses additional features, which will be further detailed 
 
 To be able to use our app, you can simply follow these steps:
 1. Install Python3 on your device. You can download it from <a href="https://www.python.org/downloads/">Here</a>.
+2. Clone the repository:
+```
+git clone https://github.com/Team-19-DSP-Tasks/FilterDesigner.git
+```
 2. Install the required packages by the following command.
 ```
+cd FilterDesigner
 pip install -r requirements.txt
 ```
 3. Run the file with the name "filterDesignUI.py"
@@ -82,18 +93,14 @@ If you encounter any issues or have questions, feel free to reach out.
 
 Gratitude goes out to all team members for their valuable contributions to this project.
 
-<div align="left">
-  <a href="https://github.com/cln-Kafka">
-    <img src="https://avatars.githubusercontent.com/u/100665578?v=4" width="100px" alt="@Kareem Noureddine">
-  </a>
-  <a href="https://github.com/MuhammadSamiAhmad">
-    <img src="https://avatars.githubusercontent.com/u/101589634?v=4" width="100px" alt="@M.Sami">
-  </a>
-  <a href="https://github.com/MohamedSayedDiab">
-    <img src="https://avatars.githubusercontent.com/u/90231744?v=4" width="100px" alt="@M.Sayed">
-  </a>
+<div align="center">
+
+| <a href="https://github.com/cln-Kafka"><img src="https://avatars.githubusercontent.com/u/100665578?v=4" width="100px" alt="@Kareem Noureddine"></a> | <a href="https://github.com/MuhammadSamiAhmad"><img src="https://avatars.githubusercontent.com/u/101589634?v=4" width="100px" alt="@M.Sami"></a> | <a href="https://github.com/MohamedSayedDiab"><img src="https://avatars.githubusercontent.com/u/90231744?v=4" width="100px" alt="@M.Sayed"></a> |
+| :-: | :-: | :-: |
+| [Kareem Noureddine](https://github.com/cln-Kafka) | [Mohamed Sami](https://github.com/MuhammadSamiAhmad) | [Mohamed Sayed](https://github.com/MohamedSayedDiab) |
+
 </div>
 
 ## License
 
-All rights reserved © 2023 to Team 19 - Systems & Biomedical Engineering, Cairo University (Class 2025)
+All rights reserved © 2023 to Team 19 of Digital Signal Processing Course - Systems & Biomedical Engineering, Cairo University (Class 2025)

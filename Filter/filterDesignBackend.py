@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 import pyqtgraph as pg
 import wfdb
-from Classes.libraryButton import ProcessButton
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QPointF, QTimer
 from PyQt5.QtWidgets import QFileDialog
 from pyqtgraph import TargetItem
 from scipy.signal import freqz, lfilter, zpk2tf
+from widgets.all_pass_library_button import AllPassProcessButton
 
 # A folder to store the phase response plots of all-pass filters
 save_directory = "Resources/All-Pass-Phase-Responses"
@@ -537,7 +537,9 @@ class Backend:
             # Instantiate a library button
             button_number = str(self.idx)
             button_name = f"allPass{button_number}"
-            button = ProcessButton(value, self.idx, self.ui.scrollAreaWidgetContents)
+            button = AllPassProcessButton(
+                value, self.idx, self.ui.scrollAreaWidgetContents
+            )
             # Set the button name
             button.setObjectName(button_name)
 
